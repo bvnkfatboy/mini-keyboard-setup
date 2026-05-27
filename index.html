@@ -1,0 +1,3890 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เครื่องมือตั้งค่าบอร์ดมาโครอัจฉริยะ · MINI Keypad Configurator</title>
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  /* ── DESIGN SYSTEM & CONSTANTS ── */
+  :root {
+    /* Base Colors (Cyber Dark Theme) */
+    --bg-gradient: linear-gradient(135deg, #0a0a0f 0%, #12121e 100%);
+    --bg: #0b0b12;
+    --surface: rgba(22, 22, 38, 0.7);
+    --surface-solid: #151525;
+    --surface-hover: rgba(30, 30, 52, 0.85);
+    --surface-active: rgba(40, 40, 70, 0.9);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+    --border-glow: rgba(108, 99, 255, 0.25);
+    --text: #f1f1f7;
+    --text-secondary: #a0a0c0;
+    --text-muted: #5a5a78;
+    
+    /* HSL Accents */
+    --accent: #6c63ff;
+    --accent-glow: rgba(108, 99, 255, 0.4);
+    --accent-secondary: #00d4aa;
+    --accent-secondary-glow: rgba(0, 212, 170, 0.3);
+    --accent-danger: #ff6b6b;
+    --accent-danger-glow: rgba(255, 107, 107, 0.3);
+    --accent-warn: #ffd93d;
+    --accent-warn-glow: rgba(255, 217, 61, 0.3);
+    
+    /* LED backlighting defaults */
+    --led-color: #00e5cc;
+    --led-opacity: 0.6;
+    --led-blur: 30px;
+    
+    /* Layout */
+    --glass-blur: blur(20px);
+    --shadow-premium: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-glow: 0 0 25px rgba(108, 99, 255, 0.15);
+    
+    /* Typography */
+    --font-thai: 'Noto Sans Thai', sans-serif;
+    --font-en: 'Outfit', sans-serif;
+    --font-mono: 'Consolas', monospace;
+  }
+
+  /* Premium Light Theme */
+  body.theme-light {
+    --bg-gradient: linear-gradient(135deg, #f2f2fa 0%, #e1e2f0 100%);
+    --bg: #eaeaf4;
+    --surface: rgba(255, 255, 255, 0.7);
+    --surface-solid: #ffffff;
+    --surface-hover: rgba(240, 240, 248, 0.9);
+    --surface-active: rgba(230, 230, 240, 0.95);
+    --border: rgba(0, 0, 0, 0.07);
+    --border-hover: rgba(0, 0, 0, 0.15);
+    --border-glow: rgba(108, 99, 255, 0.2);
+    --text: #1d1d2b;
+    --text-secondary: #5d5d7d;
+    --text-muted: #9c9cb8;
+    
+    --accent: #5247e6;
+    --accent-glow: rgba(82, 71, 230, 0.25);
+    --accent-secondary: #00b38f;
+    --accent-secondary-glow: rgba(0, 179, 143, 0.25);
+    --accent-danger: #e64545;
+    
+    --shadow-premium: 0 15px 35px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    --shadow-glow: 0 0 20px rgba(82, 71, 230, 0.1);
+  }
+
+  /* ── RESET & BASE STYLE ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-thai), var(--font-en), system-ui;
+    background: var(--bg-gradient);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+    transition: background 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
+  }
+  input, select, textarea, button {
+    font-family: inherit;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: rgba(20, 20, 35, 0.95);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--accent);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4), var(--shadow-glow);
+    padding: 12px 24px; border-radius: 12px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    z-index: 1000; display: flex; align-items: center; gap: 8px;
+    transform: translateY(100px); opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  }
+  .toast.active { transform: translateY(0); opacity: 1; }
+  .toast-icon { color: var(--accent-secondary); font-size: 16px; }
+
+  /* ── FLOATING HEADER ── */
+  .header {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--shadow-premium);
+    position: relative; z-index: 10;
+  }
+  .header-left h1 {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--text) 30%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .header-left p {
+    font-size: 11px; color: var(--text-secondary); margin-top: 2px;
+    font-family: var(--font-en); font-weight: 500;
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  /* Controls Switchers */
+  .control-group {
+    display: flex; background: rgba(0,0,0,0.15);
+    border-radius: 10px; padding: 3px; border: 1px solid var(--border);
+  }
+  .control-btn {
+    padding: 6px 12px; border-radius: 8px; border: none;
+    font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    background: transparent; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .control-btn:hover { color: var(--text); }
+  .control-btn.active {
+    background: var(--surface-solid);
+    color: var(--accent);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  /* ── MAIN WORKSPACE GRID ── */
+  .main-grid {
+    display: grid; grid-template-columns: 1fr 360px; gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-premium);
+    margin-bottom: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .card:hover {
+    border-color: var(--border-glow);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  }
+  .card-subtitle {
+    font-size: 11px; color: var(--text-muted); margin-top: -12px; margin-bottom: 18px;
+    line-height: 1.4;
+  }
+
+  /* ── DEVICE BACKLIGHT SIMULATOR & SHELL ── */
+  .device-section {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; padding: 24px 0;
+  }
+  .device-backglow {
+    position: absolute; width: 440px; height: 260px;
+    background: var(--led-color);
+    opacity: calc(var(--led-opacity) * 0.45);
+    filter: blur(var(--led-blur));
+    border-radius: 80px;
+    z-index: 1; pointer-events: none;
+    transition: background 0.3s, opacity 0.3s, filter 0.3s;
+  }
+
+  /* Breathe and Rainbow Animation states */
+  .device-backglow.mode-breathe { animation: breathe-glow 4s ease-in-out infinite; }
+  .device-backglow.mode-rainbow { animation: rainbow-glow 8s linear infinite; }
+  .device-backglow.mode-pulse { animation: pulse-glow 1.5s ease-in-out infinite; }
+
+  @keyframes breathe-glow {
+    0%, 100% { opacity: calc(var(--led-opacity) * 0.15); filter: blur(35px); }
+    50% { opacity: calc(var(--led-opacity) * 0.65); filter: blur(25px); }
+  }
+  @keyframes rainbow-glow {
+    0% { filter: hue-rotate(0deg) blur(var(--led-blur)); }
+    100% { filter: hue-rotate(360deg) blur(var(--led-blur)); }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { transform: scale(0.97); opacity: calc(var(--led-opacity) * 0.4); }
+    50% { transform: scale(1.03); opacity: calc(var(--led-opacity) * 0.7); }
+  }
+
+  .device-shell {
+    background: radial-gradient(150% 120% at 50% 0%, #1a1a26 0%, #0d0d14 100%);
+    border: 2px solid #28283e;
+    border-radius: 28px;
+    padding: 24px;
+    display: inline-flex; align-items: center; gap: 28px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative; z-index: 2;
+    transition: border-color 0.3s;
+  }
+  body.theme-light .device-shell {
+    background: radial-gradient(150% 120% at 50% 0%, #e2e2f0 0%, #b8b8cd 100%);
+    border: 2px solid #a6a6c0;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .device-shell::before {
+    content: ''; position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    width: 22px; height: 14px; background: #28283a; border-radius: 4px 4px 0 0;
+    border: 1.5px solid #1a1a26; border-bottom: none;
+  }
+  body.theme-light .device-shell::before {
+    background: #a6a6c0; border: 1.5px solid #8e8eab; border-bottom: none;
+  }
+
+  .keys-section { display: flex; flex-direction: column; gap: 12px; }
+  .keys-row { display: flex; gap: 12px; }
+
+  /* 3D Keycap */
+  .keycap {
+    width: 82px; height: 82px;
+    background: linear-gradient(160deg, #323246 0%, #20202e 60%, #181822 100%);
+    border-radius: 12px;
+    border: 1.5px solid #4a4a66;
+    border-bottom: 5px solid #0d0d15;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; transition: all 0.1s ease; position: relative; user-select: none;
+  }
+  body.theme-light .keycap {
+    background: linear-gradient(160deg, #fafaff 0%, #e6e6f2 60%, #d5d5e5 100%);
+    border-color: #ffffff;
+    border-bottom: 5px solid #b0b0c5;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  .keycap:hover {
+    background: linear-gradient(160deg, #3d3d56 0%, #262637 60%, #1e1e2b 100%);
+    border-color: #5c5c8a;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  body.theme-light .keycap:hover {
+    background: linear-gradient(160deg, #ffffff 0%, #eeeeff 60%, #e0e0f5 100%);
+    border-color: var(--accent);
+  }
+  .keycap:active, .keycap.pressed {
+    transform: translateY(3px);
+    border-bottom-width: 1.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  
+  /* Drag Over Zone Highlight */
+  .keycap.drag-over {
+    border-color: var(--accent-secondary) !important;
+    background: rgba(0, 212, 170, 0.15) !important;
+    box-shadow: 0 0 15px var(--accent-secondary-glow) !important;
+    transform: scale(1.05) translateY(-2px);
+  }
+
+  .keycap.selected {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px var(--accent-glow), 0 5px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  }
+  .key-id {
+    font-size: 9px; font-weight: 800; font-family: var(--font-en);
+    letter-spacing: 0.5px; color: var(--text-muted); text-transform: uppercase;
+  }
+  .key-label {
+    font-size: 11px; font-weight: 700; color: var(--text);
+    text-align: center; line-height: 1.2; padding: 0 4px;
+    max-width: 74px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .key-label.empty { color: var(--text-muted); font-weight: 400; }
+  .key-emoji { font-size: 20px; line-height: 1; }
+  .key-raw {
+    font-size: 8px; color: var(--text-muted); font-family: var(--font-mono);
+    position: absolute; top: 4px; right: 6px;
+  }
+  
+  /* Small pip color identifier */
+  .type-pip {
+    width: 6px; height: 6px; border-radius: 50%;
+    position: absolute; bottom: 8px; right: 8px;
+    box-shadow: 0 0 5px currentColor;
+  }
+
+  /* ── KNOB SIMULATOR ── */
+  .knob-section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .knob-label-top {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.8px;
+    color: var(--text-muted); text-transform: uppercase;
+    font-family: var(--font-en);
+  }
+  .knob-body {
+    width: 92px; height: 92px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #4a4a62 0%, #1e1e2d 45%, #0f0f15 100%);
+    border: 2px solid #3c3c56;
+    box-shadow: 0 7px 0 #08080f, 0 10px 22px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.06);
+    cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center;
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.1s;
+    user-select: none;
+  }
+  body.theme-light .knob-body {
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d8d8ea 45%, #a6a6be 100%);
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 6px 0 #8e8eab, 0 8px 18px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.8);
+  }
+  .knob-body:hover {
+    box-shadow: 0 7px 0 #08080f, 0 10px 22px rgba(0,0,0,0.6), 0 0 15px var(--accent-secondary-glow);
+  }
+  .knob-body.selected {
+    border-color: var(--accent-secondary);
+    box-shadow: 0 7px 0 #08080f, 0 0 20px var(--accent-secondary-glow);
+  }
+  .knob-body:active {
+    transform: translateY(3px);
+    box-shadow: 0 4px 0 #08080f, 0 6px 12px rgba(0,0,0,0.6);
+  }
+  .knob-body.drag-over {
+    border-color: var(--accent-secondary) !important;
+    background: rgba(0, 212, 170, 0.15) !important;
+    transform: scale(1.05);
+  }
+  
+  /* Knob turning indicator dot */
+  .knob-dot {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-secondary); top: 12px; left: 50%; transform: translateX(-50%);
+    box-shadow: 0 0 3px rgba(255,255,255,0.4);
+    transition: transform 0.15s ease-out;
+  }
+  .knob-click-badge {
+    font-size: 8px; color: var(--text-muted); font-weight: 800;
+    letter-spacing: 0.5px; position: absolute; bottom: 16px;
+    font-family: var(--font-en);
+  }
+  .knob-assigned-label {
+    font-size: 10px; color: var(--text-secondary); text-align: center;
+    max-width: 98px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 2px; font-weight: 600;
+  }
+  .knob-turns { display: flex; gap: 8px; align-items: center; margin-top: 2px; }
+  .knob-turn-btn {
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 8px;
+    cursor: pointer; font-size: 10px; font-weight: 700; color: var(--text-secondary);
+    transition: all 0.15s; min-width: 44px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    position: relative;
+  }
+  .knob-turn-btn:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+  .knob-turn-btn.selected { border-color: var(--accent-secondary); color: var(--accent-secondary); background: var(--accent-secondary-glow); }
+  .knob-turn-btn.assigned { border-color: rgba(0, 212, 170, 0.4); }
+  .knob-turn-btn.drag-over { border-color: var(--accent-secondary) !important; background: rgba(0, 212, 170, 0.15) !important; }
+  .knob-turn-icon { font-size: 11px; }
+  .knob-turn-label { font-size: 7.5px; letter-spacing: 0.3px; color: var(--text-muted); }
+  .knob-turn-val { font-size: 9px; color: var(--text); max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Hover tooltip for Knob buttons */
+  .knob-full-label {
+    display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #11111a; border: 1px solid var(--accent); border-radius: 6px;
+    padding: 4px 8px; font-size: 10px; color: #fff; white-space: nowrap;
+    pointer-events: none; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .knob-turn-btn:hover .knob-full-label { display: block; }
+
+  /* ── INTERACTIVE TOOLTIPS ── */
+  [data-tooltip] { position: relative; }
+  [data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+    padding: 6px 10px; border-radius: 8px;
+    background: rgba(15, 15, 25, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--accent);
+    color: #fff; font-size: 10.5px; font-weight: 500;
+    white-space: pre-wrap; width: max-content; max-width: 200px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 999;
+  }
+  [data-tooltip]:hover::before {
+    opacity: 1; transform: translate(-50%, -4px);
+  }
+
+  /* ── DETECT BAR ── */
+  .detect-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    box-shadow: var(--shadow-premium);
+  }
+  .detect-toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 7px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 700; color: var(--text-secondary); background: var(--surface-solid);
+    transition: all 0.15s; user-select: none;
+  }
+  .detect-toggle.active {
+    border-color: var(--accent-danger); color: var(--accent-danger);
+    background: var(--accent-danger-glow);
+    animation: pulse-border 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,107,107,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(255,107,107,0.2); }
+  }
+  .rec-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);
+    transition: background 0.15s;
+  }
+  .detect-toggle.active .rec-dot { background: var(--accent-danger); animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .hid-btn {
+    padding: 7px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 700; color: var(--text-secondary); background: var(--surface-solid);
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .hid-btn:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+  .hid-btn.connected { border-color: var(--accent-secondary); color: var(--accent-secondary); background: var(--accent-secondary-glow); }
+  .hid-btn.unavailable { opacity: 0.4; cursor: not-allowed; }
+
+  .detect-log {
+    flex: 1; min-width: 200px;
+    font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .detect-log-label { color: var(--text-muted); font-weight: 700; }
+  .key-pill {
+    background: var(--surface-solid); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700;
+    color: var(--accent-secondary); font-family: var(--font-mono);
+    animation: pop-in 0.15s ease-out;
+  }
+  @keyframes pop-in { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .no-input-msg { color: var(--text-muted); font-style: italic; }
+
+  /* ── SIDEBAR ACTION PALETTE (DRAG & DROP) ── */
+  .action-palette {
+    display: flex; flex-direction: column; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .palette-tabs {
+    display: flex; gap: 4px; overflow-x: auto; padding: 2px;
+    border-bottom: 1px solid var(--border); margin-bottom: 12px;
+  }
+  .palette-tab {
+    padding: 6px 12px; font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.25s; white-space: nowrap;
+  }
+  .palette-tab.active {
+    color: var(--accent); border-bottom-color: var(--accent);
+  }
+  
+  .palette-list {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    max-height: 290px; overflow-y: auto; padding-right: 4px;
+  }
+  .drag-card {
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px;
+    cursor: grab; display: flex; align-items: center; gap: 8px;
+    transition: all 0.15s; user-select: none;
+  }
+  .drag-card:hover {
+    border-color: var(--accent); transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .drag-card:active { cursor: grabbing; opacity: 0.5; }
+  .drag-icon {
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+  }
+  .drag-info { display: flex; flex-direction: column; min-width: 0; }
+  .drag-title {
+    font-size: 11px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .drag-sub {
+    font-size: 8.5px; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: var(--font-en);
+  }
+
+  /* ── PROFILE BAR ── */
+  .profile-bar {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+    align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 12px 18px; border-radius: 16px;
+    box-shadow: var(--shadow-premium);
+  }
+  .preset-btn {
+    padding: 6px 12px; border-radius: 8px; font-size: 11px;
+    font-weight: 700; background: var(--surface-solid); border: 1px solid var(--border);
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-btn.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .preset-btn.primary:hover { background: #5c52e6; border-color: #5c52e6; }
+  .profile-select-container { display: flex; align-items: center; gap: 8px; }
+
+  /* ── KEY EDITOR FORM ── */
+  .sel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .sel-badge {
+    background: var(--surface-solid); border: 1.5px solid var(--border);
+    border-radius: 10px; width: 44px; height: 44px;
+    font-size: 16px; font-weight: 800; color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  .sel-title { font-size: 13px; font-weight: 800; color: var(--text); }
+  .sel-sub { font-size: 10px; color: var(--text-secondary); font-family: var(--font-en); }
+  .capture-btn {
+    margin-left: auto; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+    border: 1.5px solid var(--border); color: var(--text-secondary); background: var(--surface-solid);
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+  }
+  .capture-btn:hover { border-color: var(--accent-warn); color: var(--accent-warn); }
+  .capture-btn.capturing {
+    border-color: var(--accent-warn); color: var(--accent-warn);
+    background: var(--accent-warn-glow);
+    animation: pulse-border-yellow 0.8s infinite;
+  }
+  @keyframes pulse-border-yellow { 0%,100%{box-shadow:0 0 0 0 rgba(255,217,61,0)} 50%{box-shadow:0 0 0 4px rgba(255,217,61,0.2)} }
+
+  .type-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 2px; }
+  .type-tab {
+    flex: 1; text-align: center; padding: 6px 4px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; cursor: pointer; border: none;
+    color: var(--text-secondary); background: transparent; transition: all 0.15s;
+  }
+  .type-tab.active {
+    background: var(--surface-solid); color: var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block; }
+  .mod-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .mod-btn {
+    padding: 6px 11px; border-radius: 8px; font-size: 10.5px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-secondary);
+    background: var(--surface-solid); transition: all 0.12s;
+  }
+  .mod-btn.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+  .form-select, .form-input {
+    width: 100%; padding: 8px 12px; background: var(--surface-solid); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 12px; outline: none; transition: border 0.15s;
+  }
+  .form-select:focus, .form-input:focus { border-color: var(--accent); }
+  select option { background: var(--surface-solid); color: var(--text); }
+
+  /* Custom Color picker template chips */
+  .color-grid { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .color-chip {
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .color-chip:hover { transform: scale(1.15); }
+  .color-chip.active { border-color: var(--text); transform: scale(1.1); }
+
+  /* Media & App layouts */
+  .media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .media-btn {
+    padding: 8px 4px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-solid); transition: all 0.15s; text-align: center; cursor: pointer;
+  }
+  .media-btn:hover { border-color: var(--accent-secondary); }
+  .media-btn.active { background: var(--accent-secondary-glow); border-color: var(--accent-secondary); }
+  .media-lbl { font-size: 9px; color: var(--text-secondary); font-weight: 600; margin-top: 3px; }
+
+  .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .app-btn {
+    padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-solid); color: var(--text-secondary); transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
+  }
+  .app-btn:hover { border-color: var(--accent); color: var(--text); }
+  .app-btn.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+  /* Actions Buttons inside Editor */
+  .editor-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+  .save-btn {
+    width: 100%; padding: 10px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; border: none; background: var(--accent); color: white;
+    transition: all 0.15s; box-shadow: var(--shadow-glow);
+  }
+  .save-btn:hover { background: #5c52e6; transform: translateY(-1px); }
+  .clear-btn {
+    width: 100%; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+    cursor: pointer; background: transparent; border: 1px solid var(--border);
+    color: var(--text-secondary); transition: all 0.15s;
+  }
+  .clear-btn:hover { border-color: var(--accent-danger); color: var(--accent-danger); background: var(--accent-danger-glow); }
+
+  /* ── LIVE RECORDING BANNER ── */
+  .record-panel {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,107,107,0.06); border: 1px dashed rgba(255,107,107,0.3);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+  }
+  .record-status-group { display: flex; align-items: center; gap: 8px; }
+  .record-btn {
+    background: var(--accent-danger); border: none; padding: 6px 12px;
+    border-radius: 6px; color: #fff; font-size: 10px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;
+  }
+  .record-btn:hover { background: #e54545; }
+  .record-btn.recording {
+    background: #28283e; border: 1px solid var(--accent-danger);
+    color: var(--accent-danger); animation: record-pulse 1s infinite alternate;
+  }
+  @keyframes record-pulse {
+    from { box-shadow: 0 0 4px rgba(255,107,107,0); }
+    to { box-shadow: 0 0 10px rgba(255,107,107,0.4); }
+  }
+
+  /* ── MACRO STEP BUILDER ── */
+  .step-toolbar {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    margin-bottom: 8px;
+  }
+  .step-add-btn {
+    padding: 6px 4px; border-radius: 8px; font-size: 9.5px; font-weight: 700;
+    cursor: pointer; border: 1px dashed var(--border); background: var(--surface-solid);
+    color: var(--text-secondary); transition: all 0.15s; text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  .step-add-btn:hover {
+    border-color: var(--accent-warn); color: var(--accent-warn);
+    border-style: solid; background: var(--accent-warn-glow);
+  }
+  .step-list {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 12px; max-height: 250px; overflow-y: auto;
+    padding: 4px; border: 1px solid var(--border); border-radius: 10px;
+    background: rgba(0,0,0,0.15);
+  }
+  .step-list-empty {
+    padding: 20px 10px; text-align: center; color: var(--text-muted); font-size: 11px;
+    font-style: italic; line-height: 1.4;
+  }
+  .step-row {
+    display: grid; grid-template-columns: 20px 1fr auto; gap: 8px;
+    align-items: center; padding: 6px 10px; border-radius: 8px;
+    background: var(--surface-solid); border: 1px solid var(--border);
+    transition: border-color 0.12s;
+  }
+  .step-row:hover { border-color: var(--accent-warn); }
+  .step-num { font-size: 9.5px; font-weight: 800; color: var(--text-muted); text-align: center; }
+  .step-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .step-body-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .step-type-pill {
+    font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+  }
+  .step-type-text   { background: var(--accent-warn-glow);  color: var(--accent-warn); }
+  .step-type-combo  { background: var(--accent-glow);  color: var(--accent); }
+  .step-type-click  { background: var(--accent-secondary-glow);   color: var(--accent-secondary); }
+  .step-type-wheel  { background: rgba(64,196,255,0.15);  color: #40c4ff; }
+  .step-type-wait   { background: rgba(150,150,170,0.15); color: var(--text-secondary); }
+  
+  .step-input-mini {
+    padding: 3px 6px; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text); font-size: 11px; font-family: var(--font-mono);
+    outline: none; min-width: 0;
+  }
+  .step-input-mini:focus { border-color: var(--accent-warn); }
+  .step-input-mini.full { flex: 1; }
+  .step-input-num { width: 52px; }
+  .step-select-mini {
+    padding: 3px 6px; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text); font-size: 11px; outline: none;
+  }
+  .step-mod-row { display: flex; gap: 2px; }
+  .step-mod-btn {
+    padding: 1px 5px; border-radius: 4px; font-size: 8px; font-weight: 800;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-muted);
+    background: rgba(0,0,0,0.1); transition: all 0.1s; user-select: none;
+  }
+  .step-mod-btn.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+  .step-controls { display: flex; gap: 3px; align-items: center; }
+  .step-ctrl-btn {
+    width: 20px; height: 20px; padding: 0; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+  }
+  .step-ctrl-btn:hover { color: var(--text); border-color: var(--text-secondary); }
+  .step-ctrl-btn.del:hover { color: var(--accent-danger); border-color: var(--accent-danger); background: var(--accent-danger-glow); }
+  .step-ctrl-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+  /* ── REAL-TIME AUDIT VALIDATION PANEL ── */
+  .audit-panel {
+    background: rgba(0, 212, 170, 0.04); border: 1px solid rgba(0, 212, 170, 0.15);
+    border-radius: 12px; padding: 10px 14px; margin-top: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .audit-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; }
+  .audit-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-secondary); box-shadow: 0 0 5px var(--accent-secondary); }
+  .audit-dot.warn { background: var(--accent-warn); box-shadow: 0 0 5px var(--accent-warn); }
+  .audit-details-trigger { font-size: 10.5px; color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .audit-issues-list {
+    margin-top: 8px; font-size: 10px; color: var(--text-secondary);
+    display: flex; flex-direction: column; gap: 4px; padding-left: 12px;
+  }
+  .audit-issue-item { list-style-type: square; }
+
+  /* ── LED LIGHT CONTROL CARD ── */
+  .led-control-layout { display: flex; flex-direction: column; gap: 12px; }
+  .slider-group { display: flex; align-items: center; gap: 10px; }
+  .slider-group label { width: 80px; font-size: 11px; color: var(--text-secondary); font-weight: 700; }
+  .slider-group input[type="range"] {
+    flex: 1; height: 6px; background: rgba(0,0,0,0.2); border-radius: 5px;
+    outline: none; -webkit-appearance: none;
+  }
+  .slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; box-shadow: 0 0 5px var(--accent-glow);
+  }
+
+  /* ── MAP TABLE ── */
+  .table-container { overflow-x: auto; margin-top: 10px; }
+  .map-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .map-table th {
+    text-align: left; color: var(--text-muted); font-weight: 800;
+    padding: 6px 10px; border-bottom: 1.5px solid var(--border);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .map-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  body.theme-light .map-table td { border-bottom: 1px solid rgba(0,0,0,0.03); }
+  .map-code { font-family: var(--font-mono); background: var(--surface-solid); border-radius: 4px; padding: 2px 6px; font-size: 10px; border: 1px solid var(--border); }
+  .map-status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
+  .dot-assigned { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .dot-detected { background: var(--accent-secondary); box-shadow: 0 0 4px var(--accent-secondary); }
+  .dot-empty { background: var(--text-muted); }
+
+  /* ── IMPORT / EXPORT / DIAGNOSTICS ── */
+  .export-row { display: flex; gap: 8px; }
+  .exp-btn {
+    flex: 1; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface-solid);
+    color: var(--text-secondary); transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .exp-btn:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+  .exp-msg { font-size: 11px; color: var(--accent-secondary); margin-top: 7px; display: none; font-weight: 700; text-align: center; }
+
+  .dongle-btn {
+    width: 100%; padding: 9px; border-radius: 10px; font-size: 11.5px; font-weight: 700;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--surface-solid);
+    color: var(--text-secondary); transition: all 0.15s; margin-top: 6px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .dongle-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .dongle-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #5247e6);
+    border-color: var(--accent); color: white; box-shadow: var(--shadow-glow);
+  }
+  .dongle-btn.primary:hover { background: linear-gradient(135deg, #7b74ff, var(--accent)); }
+  .dongle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  .dongle-status {
+    display: flex; align-items: center; gap: 8px; font-size: 11px;
+    color: var(--text-secondary); margin-bottom: 12px;
+  }
+  .dongle-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+  .dongle-dot.on { background: var(--accent-secondary); box-shadow: 0 0 5px var(--accent-secondary); }
+
+  .dongle-log {
+    margin-top: 10px; background: #07070b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px; max-height: 180px; overflow-y: auto;
+    font-family: var(--font-mono); font-size: 10px; line-height: 1.4;
+  }
+
+  /* ── OVERLAY POPUPS (PRESETS, ONBOARDING, DONGLE STATUS) ── */
+  .overlay {
+    display: none; position: fixed; inset: 0; background: rgba(5,5,10,0.85);
+    backdrop-filter: blur(5px); z-index: 200; align-items: center; justify-content: center;
+    animation: fade-in 0.25s ease-out;
+  }
+  .overlay.open { display: flex; }
+  @keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+
+  .modal-box {
+    background: var(--surface-solid); border: 1px solid var(--accent);
+    border-radius: 24px; padding: 28px; width: 480px; max-width: 90vw;
+    max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6), var(--shadow-glow);
+    animation: scale-up 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes scale-up { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+  
+  .modal-box h2 { font-size: 18px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .preset-list { display: flex; flex-direction: column; gap: 10px; }
+  .preset-item {
+    padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border);
+    cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .preset-item:hover {
+    border-color: var(--accent); background: var(--accent-glow);
+    transform: translateY(-1px);
+  }
+  .preset-info { display: flex; flex-direction: column; gap: 2px; }
+  .preset-info h4 { font-size: 12.5px; font-weight: 800; color: var(--text); }
+  .preset-info p { font-size: 10.5px; color: var(--text-secondary); }
+  .preset-badge {
+    background: var(--surface); padding: 4px 8px; border-radius: 6px;
+    font-size: 9px; font-weight: 700; color: var(--accent); border: 1px solid var(--border);
+    font-family: var(--font-en);
+  }
+  .modal-close {
+    margin-top: 16px; width: 100%; padding: 10px; border-radius: 10px;
+    background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  }
+  .modal-close:hover { border-color: var(--text); color: var(--text); }
+
+  /* Interactive Onboarding Tour */
+  .tour-step-box {
+    background: var(--surface-solid); border: 2px solid var(--accent);
+    border-radius: 20px; padding: 24px; width: 340px; box-shadow: var(--shadow-premium);
+    position: absolute; z-index: 1000; display: none; flex-direction: column; gap: 12px;
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .tour-title { font-size: 14px; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+  .tour-desc { font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
+  .tour-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .tour-dots { display: flex; gap: 4px; }
+  .tour-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .tour-dot.active { background: var(--accent); }
+  .tour-btn {
+    padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface-solid);
+    color: var(--text-secondary); transition: all 0.12s;
+  }
+  .tour-btn.next { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tour-overlay-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 998; display: none;
+    pointer-events: none;
+  }
+
+  /* Keyboard Flash Send Feedback overlay */
+  .send-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(5,5,10,0.9); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+    animation: fade-in 0.25s;
+  }
+  .send-overlay.active { display: flex; }
+  .send-overlay-text { font-size: 20px; font-weight: 800; color: #fff; }
+  .send-overlay-sub { font-size: 12px; color: var(--text-secondary); margin-top: -8px; }
+  .send-progress-track { width: 280px; height: 8px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+  .send-progress-fill { height: 100%; width: 0; background: var(--accent-secondary); border-radius: 99px; transition: width 0.12s ease-out; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toast-text">สำเร็จ!</span>
+</div>
+
+<!-- HELP ONBOARDING OVERLAY MASK -->
+<div class="tour-overlay-mask" id="tour-mask"></div>
+<div class="tour-step-box" id="tour-box">
+  <div class="tour-title" id="tour-title">🔌 เชื่อมต่ออุปกรณ์</div>
+  <div class="tour-desc" id="tour-desc">กดปุ่ม Connect เพื่อเชื่อมต่อบอร์ดจริงผ่าน WebHID บราวเซอร์จะเชื่อมต่อเข้ากับอุปกรณ์โปรแกรมโดยอัตโนมัติ</div>
+  <div class="tour-footer">
+    <div class="tour-dots" id="tour-dots">
+      <span class="tour-dot active"></span>
+      <span class="tour-dot"></span>
+      <span class="tour-dot"></span>
+      <span class="tour-dot"></span>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="tour-btn" onclick="skipTour()" id="tour-skip-btn">ข้าม</button>
+      <button class="tour-btn next" onclick="nextTourStep()" id="tour-next-btn">ถัดไป</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1 id="t-header-title">⌨️ เครื่องมือตั้งค่าบอร์ดมาโครอัจฉริยะ</h1>
+    <p id="t-header-subtitle">6-Key Pad + Knob Encoder · Premium Version · Windows Mouse-aware</p>
+  </div>
+  <div class="header-right">
+    <!-- Switch Sound Switcher -->
+    <div class="control-group">
+      <button class="control-btn active" id="sw-off" onclick="setSwitchSound('off')" data-tooltip="ปิดเสียงคีย์บอร์ด">🔇</button>
+      <button class="control-btn" id="sw-clicky" onclick="setSwitchSound('clicky')" data-tooltip="เสียง Clicky (Blue Switch)">🔵</button>
+      <button class="control-btn" id="sw-tactile" onclick="setSwitchSound('tactile')" data-tooltip="เสียง Tactile (Brown Switch)">🟤</button>
+      <button class="control-btn" id="sw-linear" onclick="setSwitchSound('linear')" data-tooltip="เสียง Linear (Red Switch)">🔴</button>
+    </div>
+    
+    <!-- Theme Switcher -->
+    <div class="control-group">
+      <button class="control-btn active" id="th-dark" onclick="setTheme('dark')">🌙</button>
+      <button class="control-btn" id="th-light" onclick="setTheme('light')">☀️</button>
+    </div>
+
+    <!-- Language Selector -->
+    <div class="control-group">
+      <button class="control-btn active" id="lang-th" onclick="setLanguage('th')">TH</button>
+      <button class="control-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+    </div>
+
+    <!-- Help Tour -->
+    <button class="preset-btn" onclick="startTour()" data-tooltip="เริ่มทัวร์แนะนำโปรแกรม">❓ ช่วยเหลือ</button>
+  </div>
+</div>
+
+<!-- LIVE DETECTION BAR -->
+<div class="detect-bar" id="tour-anchor-1">
+  <div class="detect-toggle" id="detect-toggle" onclick="toggleDetect()" data-tooltip="เปิดการแสดงผลแบบเรียลไทม์เมื่อมีการกดปุ่มบนบอร์ด">
+    <div class="rec-dot" id="rec-dot"></div>
+    <span id="detect-label">Live Detection OFF</span>
+  </div>
+
+  <button class="hid-btn" id="hid-btn" onclick="connectHID()" title="เชื่อมต่อบอร์ดจริงผ่าน USB HID (ใช้ได้กับ Chrome / Edge)">
+    🔌 <span id="t-btn-connect">Connect WebHID</span>
+  </button>
+
+  <div class="detect-log">
+    <span class="detect-log-label" id="t-last-input">Last input:</span>
+    <span id="log-pills"><span class="no-input-msg" id="t-press-pad">press a key on your pad…</span></span>
+  </div>
+
+  <div style="font-size:11px; color:var(--accent-secondary); font-weight:700;" id="detect-hint"></div>
+</div>
+
+<!-- PROFILE SELECT BAR -->
+<div class="profile-bar" id="profile-bar">
+  <!-- Filled dynamically by JavaScript -->
+</div>
+
+<!-- MAIN GRID WORKSPACE -->
+<div class="main-grid">
+  <!-- LEFT COLUMN: DEVICE LAYOUT MAP & VISUAL BACKLIGHTS -->
+  <div>
+    <div class="card" id="tour-anchor-2">
+      <div class="card-title">
+        <span id="t-layout-title">Device Layout — click a key to configure it &nbsp;·&nbsp; Drag actions onto keys</span>
+      </div>
+      <div class="card-subtitle" id="t-layout-subtitle">
+        คลิกที่ปุ่มใดๆ เพื่อเปิดการแก้ไขหน้าจอด้านขวา หรือลากชุดคำสั่งมาลงบนปุ่มจำลองโดยตรงได้เลย!
+      </div>
+
+      <div class="device-section">
+        <!-- VIRTUAL ANIMATED LED BACKLIGHT -->
+        <div class="device-backglow" id="device-led-glow"></div>
+
+        <!-- PHYSICAL SHELL -->
+        <div class="device-shell">
+          <!-- 6 KEYCAPS -->
+          <div class="keys-section">
+            <div class="keys-row">
+              <div class="keycap" id="cap-K1" onclick="selectKey('K1')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K1')">
+                <span class="key-id">K1</span>
+                <span class="key-emoji" id="emoji-K1"></span>
+                <span class="key-label empty" id="lbl-K1">—</span>
+                <span class="key-raw" id="raw-K1"></span>
+              </div>
+              <div class="keycap" id="cap-K2" onclick="selectKey('K2')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K2')">
+                <span class="key-id">K2</span>
+                <span class="key-emoji" id="emoji-K2"></span>
+                <span class="key-label empty" id="lbl-K2">—</span>
+                <span class="key-raw" id="raw-K2"></span>
+              </div>
+              <div class="keycap" id="cap-K3" onclick="selectKey('K3')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K3')">
+                <span class="key-id">K3</span>
+                <span class="key-emoji" id="emoji-K3"></span>
+                <span class="key-label empty" id="lbl-K3">—</span>
+                <span class="key-raw" id="raw-K3"></span>
+              </div>
+            </div>
+            <div class="keys-row">
+              <div class="keycap" id="cap-K4" onclick="selectKey('K4')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K4')">
+                <span class="key-id">K4</span>
+                <span class="key-emoji" id="emoji-K4"></span>
+                <span class="key-label empty" id="lbl-K4">—</span>
+                <span class="key-raw" id="raw-K4"></span>
+              </div>
+              <div class="keycap" id="cap-K5" onclick="selectKey('K5')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K5')">
+                <span class="key-id">K5</span>
+                <span class="key-emoji" id="emoji-K5"></span>
+                <span class="key-label empty" id="lbl-K5">—</span>
+                <span class="key-raw" id="raw-K5"></span>
+              </div>
+              <div class="keycap" id="cap-K6" onclick="selectKey('K6')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'K6')">
+                <span class="key-id">K6</span>
+                <span class="key-emoji" id="emoji-K6"></span>
+                <span class="key-label empty" id="lbl-K6">—</span>
+                <span class="key-raw" id="raw-K6"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KNOB -->
+          <div class="knob-section">
+            <div class="knob-label-top" id="t-knob-top">Knob</div>
+            <div class="knob-body" id="cap-knob-click" onclick="selectKey('knob-click')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'knob-click')">
+              <div class="knob-dot" id="knob-rotate-dot"></div>
+              <span class="knob-click-badge" id="t-knob-badge">PRESS</span>
+            </div>
+            <div class="knob-assigned-label" id="lbl-knob-click">unassigned</div>
+            
+            <div class="knob-turns">
+              <div class="knob-turn-btn" id="cap-knob-left" onclick="selectKey('knob-left')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'knob-left')">
+                <span class="knob-turn-icon">◀</span>
+                <span class="knob-turn-label">CCW</span>
+                <span class="knob-turn-val" id="lbl-knob-left">—</span>
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); font-weight:700;" id="t-turn">turn</div>
+              <div class="knob-turn-btn" id="cap-knob-right" onclick="selectKey('knob-right')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'knob-right')">
+                <span class="knob-turn-icon">▶</span>
+                <span class="knob-turn-label">CW</span>
+                <span class="knob-turn-val" id="lbl-knob-right">—</span>
+              </div>
+            </div>
+          </div>
+        </div><!-- /device-shell -->
+      </div><!-- /device-section -->
+
+      <!-- AUDIT PANEL SYSTEM -->
+      <div class="audit-panel" id="audit-bar">
+        <div class="audit-status">
+          <span class="audit-dot" id="audit-dot"></span>
+          <span id="audit-text">โปรไฟล์ปกติดี: ปุ่มครบถ้วนพร้อมส่ง</span>
+        </div>
+        <span class="audit-details-trigger" onclick="toggleAuditDetails()" id="audit-trigger-txt">แสดงรายละเอียด (0)</span>
+      </div>
+      <ul class="audit-issues-list" id="audit-list" style="display:none;">
+        <!-- Filled dynamically -->
+      </ul>
+    </div><!-- /card -->
+
+    <!-- ADVANCED TABLE KEYMAP -->
+    <div class="card">
+      <div class="card-title">
+        <span id="t-table-title">ตารางเทียบข้อมูลคีย์กายภาพและการส่งออกเฟิร์มแวร์</span>
+      </div>
+      <div class="card-subtitle" id="t-table-subtitle">
+        ตารางสรุปปุ่มจำลองและการตั้งค่ารหัสคีย์ที่ตรวจจับได้ พร้อมแสดงค่าแพ็กเก็ตเลขฐานสิบหกของคีย์นั้นๆ สำหรับส่งเข้าระบบอุปกรณ์
+      </div>
+      <div class="table-container">
+        <table class="map-table">
+          <thead>
+            <tr>
+              <th id="th-pad-key">Pad Key</th>
+              <th id="th-det-code">Detected Code</th>
+              <th id="th-assignment">Assignment</th>
+              <th id="th-firmware">Firmware Pack</th>
+              <th id="th-status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="map-tbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: ACTION PALETTE & EDITOR -->
+  <div>
+    <!-- DRAG & DROP ACTION PALETTE -->
+    <div class="card" id="tour-anchor-3">
+      <div class="card-title">
+        <span id="t-palette-title">คลังคำสั่งลัดด่วน (Action Palette)</span>
+      </div>
+      <div class="card-subtitle" id="t-palette-subtitle">
+        ลากกล่องคำสั่งเหล่านี้ไปวางลงบนปุ่มจำลอง K1-K6 หรือปุ่มหมุนด่วนเพื่อตั้งค่าได้ในทันที!
+      </div>
+      
+      <div class="palette-tabs">
+        <button class="palette-tab active" onclick="switchPaletteTab('shortcuts')" id="tab-shortcuts">⌨️ ปุ่มลัดลัดด่วน</button>
+        <button class="palette-tab" onclick="switchPaletteTab('media')" id="tab-media">🎵 การควบคุมมีเดีย</button>
+        <button class="palette-tab" onclick="switchPaletteTab('apps')" id="tab-apps">📁 แอปพลิเคชัน</button>
+        <button class="palette-tab" onclick="switchPaletteTab('macros')" id="tab-macros">📝 มาโครคำสั่ง</button>
+      </div>
+
+      <div class="palette-list" id="palette-list">
+        <!-- Rendered dynamically by switchPaletteTab -->
+      </div>
+    </div>
+
+    <!-- MAIN EDITOR CARD -->
+    <div class="card" id="editor-card">
+      <div class="card-title">
+        <span id="t-editor-title">เครื่องมือแก้ไขปุ่ม (Key Editor)</span>
+      </div>
+      <div id="editor-body">
+        <div class="no-sel" id="t-editor-empty">👆 คลิกเลือกปุ่ม หรือ ลากคำสั่งลัดจากคลังมาลงบนคีย์เพื่อแก้ไขตั้งค่า</div>
+      </div>
+    </div>
+
+    <!-- LED RGB LIGHT CONTROL -->
+    <div class="card" id="tour-anchor-4">
+      <div class="card-title">
+        <span id="t-led-title">ระบบปรับแสงไฟบอร์ดจำลอง (Backlight Visualizer)</span>
+      </div>
+      <div class="card-subtitle" id="t-led-subtitle">
+        จำลองการทำงานของแสงไฟ LED ใต้เครื่อง โดยคุณสามารถปรับเปลี่ยนโหมด สี และความสว่าง เพื่อแสดงพรีวิวจริงได้ตามใจชอบ
+      </div>
+      <div class="led-control-layout">
+        <div class="slider-group">
+          <label id="t-led-mode">โหมดแสงไฟ</label>
+          <select class="form-select" id="led-mode-select" onchange="updateLEDMode(this.value)">
+            <option value="static" id="opt-static">ไฟนิ่งตลอดเวลา (Solid Static)</option>
+            <option value="breathe" id="opt-breathe">ไฟกระพริบช้า (Breathing Effect)</option>
+            <option value="rainbow" id="opt-rainbow">รุ้งหมุนวน (Rainbow Flow)</option>
+            <option value="pulse" id="opt-pulse">นีออนพัลส์ (Dynamic Pulse)</option>
+            <option value="off" id="opt-off">ปิดไฟคีย์บอร์ด (Backlight Off)</option>
+          </select>
+        </div>
+        
+        <div class="slider-group" id="led-color-picker-group">
+          <label id="t-led-color">เลือกสีไฟ</label>
+          <div class="led-control-layout" style="flex:1;">
+            <input type="color" class="form-input" id="led-color-picker" style="height:38px; cursor:pointer;" value="#00e5cc" oninput="updateLEDColor(this.value)">
+            <div class="color-grid">
+              <span class="color-chip" style="background:#00e5cc;" onclick="pickColorChip('#00e5cc')"></span>
+              <span class="color-chip" style="background:#6c63ff;" onclick="pickColorChip('#6c63ff')"></span>
+              <span class="color-chip" style="background:#ff6b6b;" onclick="pickColorChip('#ff6b6b')"></span>
+              <span class="color-chip" style="background:#ffd93d;" onclick="pickColorChip('#ffd93d')"></span>
+              <span class="color-chip" style="background:#00e676;" onclick="pickColorChip('#00e676')"></span>
+              <span class="color-chip" style="background:#ff8a5a;" onclick="pickColorChip('#ff8a5a')"></span>
+              <span class="color-chip" style="background:#e040fb;" onclick="pickColorChip('#e040fb')"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="slider-group">
+          <label id="t-led-brightness">ความสว่าง</label>
+          <input type="range" min="0" max="100" value="60" id="led-brightness-slider" oninput="updateLEDBrightness(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- AUTOHOTKEY EXPORTER -->
+    <div class="card">
+      <div class="card-title">
+        <span id="t-ahk-title">🖱 สคริปต์มาโครช่วย (AutoHotkey Helper)</span>
+      </div>
+      <div class="card-subtitle" id="t-ahk-subtitle">
+        มาโครการเคลื่อนไหวเมาส์หรือการคลิกจำลอง ไม่สามารถประมวลผลตรงในชิปบอร์ดได้ โปรแกรมนี้จึงมีตัวช่วยสร้างสคริปต์ AHK v2 ให้ดาวน์โหลดและเปิดรันควบคู่กันได้ทันที
+      </div>
+      <div class="export-row">
+        <button class="exp-btn" onclick="downloadAHK()"><span id="t-btn-download-ahk">💾 โหลดสคริปต์ .ahk</span></button>
+        <button class="exp-btn" onclick="previewAHK()"><span id="t-btn-preview-ahk">👁 โค้ดตัวอย่าง</span></button>
+      </div>
+      <div id="ahk-stats" style="font-size:10px; color:var(--text-muted); margin-top:8px; font-weight:700;"></div>
+    </div>
+
+    <!-- CONSOLE WRITE TO DONGLE -->
+    <div class="card">
+      <div class="card-title">
+        <span id="t-write-title">นำเข้าและส่งออกข้อมูล (Profiles)</span>
+      </div>
+      <div class="export-row">
+        <button class="exp-btn" onclick="document.getElementById('json-import').click()">📂 Import JSON</button>
+        <button class="exp-btn" onclick="downloadJSON()">💾 Export JSON</button>
+      </div>
+      <input id="json-import" type="file" accept=".json,application/json" style="display:none" onchange="importJSONFile(event)">
+      
+      <div class="export-row" style="margin-top:7px;">
+        <button class="exp-btn" onclick="resetAllData()" style="border-color:var(--accent-danger); color:var(--accent-danger);">🗑 Reset ทุกคีย์คีย์ในโปรไฟล์นี้</button>
+      </div>
+      <div class="exp-msg" id="exp-msg">✓ บันทึกการแปลงสำเร็จ!</div>
+
+      <div class="card-title" style="margin-top:20px;">
+        <span id="t-send-title">อัปโหลดข้อมูลลงอุปกรณ์บอร์ดจริง</span>
+      </div>
+      <div class="dongle-status">
+        <div class="dongle-dot" id="dongle-dot"></div>
+        <span id="dongle-status-txt">ยังไม่เชื่อมต่อ — กรุณาเปิด WebHID ด้านบน</span>
+      </div>
+      <button class="dongle-btn primary" onclick="sendCurrentLayer()" id="btn-send-config">
+        🔄 ส่งการตั้งค่าล่าสุดเข้าสู่บอร์ดคีย์บอร์ด
+      </button>
+      <div id="last-sent-bar" style="margin-top:8px; font-size:11px; color:var(--accent-secondary); font-weight:700; min-height:16px;"></div>
+
+      <details style="margin-top:12px;">
+        <summary style="cursor:pointer; color:var(--text-secondary); font-size:11px; font-weight:700;" id="t-adv-diagnostics">ระบบวิเคราะห์และดีบั๊กขั้นสูง (Diagnostics)</summary>
+        <div class="dongle-log" id="dongle-log" style="max-height:220px; resize:vertical; margin-top:8px;">
+          <div style="color:var(--text-muted);">ระบบบันทึก Log การส่งสัญญาณ HID ปกติ...</div>
+        </div>
+        <button class="dongle-btn" onclick="scanHIDDevice()">🔍 Scan HID Descriptor</button>
+        <button class="dongle-btn" onclick="reopenHIDDevice()">♻ Reopen Current HID Device</button>
+        <button class="dongle-btn" onclick="cycleHIDDevice()">↻ Cycle Selected HID Device</button>
+        <button class="dongle-btn" onclick="diagnosticWriteLayer1()">🧪 Diagnostic Write + Save Full Log</button>
+        <button class="dongle-btn" onclick="downloadFullLog()">📝 Download Full Log (.txt)</button>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- PRESETS SELECT OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="modal-box">
+    <h2 id="t-modal-presets">⚡ เลือกโหลดโปรไฟล์สำเร็จรูป (Preset Profiles)</h2>
+    <div class="preset-list">
+      <div class="preset-item" onclick="loadPreset('media')">
+        <div class="preset-info">
+          <h4 id="t-p-media">🎵 การควบคุมมีเดีย & วิดีโอ</h4>
+          <p id="t-p-media-desc">K1-K6: เล่น/หยุด, เพลงถัดไป, ก่อนหน้า, หรี่ไฟ · Knob: เพิ่ม/ลดเสียงมีเดีย</p>
+        </div>
+        <span class="preset-badge">Media</span>
+      </div>
+      <div class="preset-item" onclick="loadPreset('productivity')">
+        <div class="preset-info">
+          <h4 id="t-p-prod">⚡ พิมพ์งานและความคิดสร้างสรรค์ทั่วไป</h4>
+          <p id="t-p-prod-desc">K1-K6: เลิกทำ (Undo), ทำซ้ำ, ก๊อปปี้, วาง, บันทึกงาน (Save), แคปจอ</p>
+        </div>
+        <span class="preset-badge">Office</span>
+      </div>
+      <div class="preset-item" onclick="loadPreset('photoshop')">
+        <div class="preset-info">
+          <h4 id="t-p-creative">🎨 ดีไซน์เนอร์ระดับโปร Photoshop</h4>
+          <p id="t-p-creative-desc">K1-K6: เลิกทำ, ซูมเข้า, ซูมออก, ขยายแปรง (+), ลดขนาดแปรง (-), เซฟไฟล์</p>
+        </div>
+        <span class="preset-badge">Adobe CC</span>
+      </div>
+      <div class="preset-item" onclick="loadPreset('browser')">
+        <div class="preset-info">
+          <h4 id="t-p-browser">🌐 เปิดเว็บไซต์และเบราว์เซอร์</h4>
+          <p id="t-p-browser-desc">K1-K6: แท็บใหม่, ปิดแท็บ, รีเฟรช, ย้อนกลับ, ไปข้างหน้า, เปิด DevTools</p>
+        </div>
+        <span class="preset-badge">Web</span>
+      </div>
+      <div class="preset-item" onclick="loadPreset('gaming')">
+        <div class="preset-info">
+          <h4 id="t-p-gaming">🎮 เกมเมอร์และ OBS สตรีมมิ่ง</h4>
+          <p id="t-p-gaming-desc">K1-K6: ปิดไมค์บอร์ด, สลับฉาก OBS, แคปเจอร์สตรีม, ปุ่มไมค์พูดกิลด์ PTT</p>
+        </div>
+        <span class="preset-badge">Streamer</span>
+      </div>
+      <div class="preset-item" onclick="loadPreset('excel')">
+        <div class="preset-info">
+          <h4 id="t-p-coding">📊 ทำงานโค้ดและตาราง Excel อัจฉริยะ</h4>
+          <p id="t-p-coding-desc">K1-K6: ปุ่มผลรวมสูตร AutoSum, ฟอร์แมตเซลล์, สลับฟิลเตอร์, บันทึกอัตโนมัติ</p>
+        </div>
+        <span class="preset-badge">Coding</span>
+      </div>
+    </div>
+    <button class="modal-close" onclick="document.getElementById('overlay').classList.remove('open')">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- DONGLE WRITING LOADING OVERLAY -->
+<div class="send-overlay" id="send-overlay">
+  <div class="send-overlay-text" id="send-overlay-text">กำลังอัปโหลดสัญญาณ...</div>
+  <div class="send-progress-track"><div class="send-progress-fill" id="send-progress-fill"></div></div>
+  <div class="send-overlay-sub" id="send-overlay-sub">โปรแกรมกำลังเขียนแพ็กเก็ตเข้าสู่คีย์บอร์ดบอร์ดจริง</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT: PROGRAM LOGIC & WEBHID INTERFACE
+     ══════════════════════════════════════════════ -->
+<script>
+// ── LANGUAGE SYSTEM Lookup Dictionary ──
+const TRANSLATIONS = {
+  th: {
+    title: "⌨️ เครื่องมือตั้งค่าบอร์ดมาโครอัจฉริยะ",
+    subtitle: "6-Key Pad + Knob Encoder · MINI KeyBoard · รุ่นสมบูรณ์ · ลากวางปุ่ม ปรับไฟจำลอง เสียงสวิตช์จำลอง",
+    liveDetectOn: "Live Detection ON (เปิดระบบตรวจจับ)",
+    liveDetectOff: "Live Detection OFF (ปิดระบบตรวจจับ)",
+    btnConnect: "เชื่อมต่อ WebHID USB",
+    lastInput: "ปุ่มที่กดล่าสุด:",
+    pressPad: "กรุณากดปุ่มบนบอร์ดคีย์บอร์ดจริงเพื่อตรวจจับ...",
+    presets: "⚡ โหลดโปรไฟล์สำเร็จรูป",
+    newProfile: "＋ เพิ่มโปรไฟล์",
+    saveCopy: "💾 เซฟคัดลอก",
+    rename: "✏ เปลี่ยนชื่อ",
+    delete: "🗑 ลบโปรไฟล์",
+    layoutTitle: "โครงสร้างอุปกรณ์จริง — คลิกเลือกปุ่มเพื่อตั้งค่า หรือ ลากการตั้งค่ามาใส่",
+    layoutSubtitle: "คลิกปุ่มหรือ Knob ด้านบนเพื่อเริ่มตั้งค่าความสามารถ หรือนำคำสั่งลัดจากคลังมาลากใส่ได้เลย!",
+    knobTop: "ปุ่มหมุนด่วน",
+    knobBadge: "กดปุ่ม",
+    turn: "หมุน",
+    tableTitle: "ตารางสรุปปุ่มจำลองและการตั้งค่าเฟิร์มแวร์",
+    tableSubtitle: "ดูเทียบรหัสคีย์จำลองที่เครื่องได้รับ รหัสคีย์บอร์ด (Keycode) และแพ็กเก็ตคำสั่ง HEX สำหรับปุ่มที่เลือก",
+    paletteTitle: "คลังคำสั่งลัดจำลองด่วน (Action Palette)",
+    paletteSubtitle: "รวมคำสั่งลัดที่ใช้งานบ่อย คุณสามารถลากและวางการ์ดคำสั่งลงบนปุ่มจำลองในจอภาพจำลองเพื่อทำการแมปได้ทันที",
+    tabShortcuts: "⌨️ ปุ่มลัดด่วน",
+    tabMedia: "🎵 คอนโทรลมีเดีย",
+    tabApps: "📁 เปิดแอปยอดฮิต",
+    tabMacros: "📝 มาโครจำลอง",
+    editorTitle: "ตัวแก้ไขคีย์และ Knob (Key Editor)",
+    editorEmpty: "👆 คลิกเลือกปุ่ม หรือ ลากคำสั่งลัดจากคลังมาลงบนคีย์เพื่อแก้ไขตั้งค่า",
+    ledTitle: "ระบบไฟ LED เรืองแสงจำลอง (Backlight Visualizer)",
+    ledSubtitle: "จำลองการปรับแต่งแสงสีไฟ LED บนหน้าจอแบบเรียลไทม์ โหมดนี้ปรับแต่งเพื่อความสวยงามและการมองเห็นปุ่มจำลองที่ชัดเจน",
+    ledMode: "โหมดแสงไฟ",
+    optStatic: "ไฟนิ่งตลอดเวลา (Solid Static)",
+    optBreathe: "ไฟกระพริบช้า (Breathing Effect)",
+    optRainbow: "รุ้งหมุนวน (Rainbow Flow)",
+    optPulse: "นีออนพัลส์ (Dynamic Pulse)",
+    optOff: "ปิดแสงไฟใต้เครื่อง (Backlight Off)",
+    ledColor: "เลือกสีแสงไฟจำลอง",
+    ledBrightness: "ปรับระดับความสว่าง",
+    ahkTitle: "🖱 สคริปต์มาโครช่วย (AutoHotkey Helper)",
+    ahkSubtitle: "เนื่องจากปุ่มบางอย่าง เช่น คลิกเมาส์ หรือ สกรอลเมาส์ ไม่สามารถยิงตรงจากฮาร์ดแวร์บอร์ดได้ โปรแกรมนี้จะช่วยสร้างสคริปต์เพื่อใช้เป็นตัวกลางให้คุณดาวน์โหลดคู่กัน",
+    btnDownloadAhk: "💾 โหลดสคริปต์ .ahk สำหรับบอร์ด",
+    btnPreviewAhk: "👁 ดูตัวอย่างสคริปต์ AHK",
+    writeTitle: "สำรองและกู้คืนไฟล์โปรไฟล์",
+    sendTitle: "เขียนข้อมูลลงบอร์ดจำลองจริง",
+    notConnected: "ยังไม่ได้เชื่อมต่อ USB — กรุณากดปุ่มเชื่อมต่อ USB WebHID ด้านบน",
+    sendSuccess: "✓ ส่งพรีเซ็ตลงบอร์ดจำลองสำเร็จ!",
+    sendLayer: "🔄 เขียนการตั้งค่าทับหน้าโปรไฟล์ปัจจุบันลงเครื่องจริง",
+    advDiagnostics: "ระบบตรวจจับและดีบั๊กขั้นสูง (Advanced Diagnostics)",
+    modalPresets: "⚡ เลือกโหลดโครงสร้างพรีเซ็ทสำหรับงานตัดต่อและเล่นทั่วไป",
+    pMedia: "🎵 ความบันเทิง คีย์ลัดมีเดียมีประสิทธิภาพ",
+    pMediaDesc: "ตั้งค่าสำหรับการเล่น/หยุดเพลง, ปรับระดับเสียงด่วน, เพลงถัดไป · ปุ่มหมุน Knob คือความดังเสียงหลัก",
+    pProd: "⚡ คีย์บอร์ดทำงานออฟฟิศระดับโปร",
+    pProdDesc: "แมปปุ่มสำหรับการ Undo, Redo, Copy, Paste, บันทึกเอกสารฉับพลัน, และกด Snipping tool แคปหน้าจอ",
+    pCreative: "🎨 ความคิดสร้างสรรค์ Adobe Photoshop",
+    pCreativeDesc: "ตั้งค่าสำหรับการยกเลิกทำงาน, ซูมภาพเข้า-ออกหน้าจอ, ปรับขนาดบรัชพู่กัน (+ / -) และกดเซฟไฟล์ด่วน",
+    pBrowser: "🌐 นำทางเบราว์เซอร์และอินเทอร์เน็ต",
+    pBrowserDesc: "ตั้งคีย์สำหรับการเปิดแท็บใหม่, ปิดแท็บปัจจุบัน, รีเฟรชหน้าเว็บ, ย้อนกลับหน้าเดิม, หรือเปิด DevTools ทันที",
+    pGaming: "🎮 มาโครเกมเมอร์และแคสเตอร์ OBS Studio",
+    pGamingDesc: "คีย์สำหรับปิดไมโครโฟน Discord, คีย์พูด PTT ในเกม, ปิดเสียงลำโพงด่วน, สลับหน้าสตรีม OBS, ถ่ายภาพสตรีม",
+    pCoding: "📊 ตาราง Excel อัจฉริยะ และการเขียนโปรแกรม",
+    pCodingDesc: "ตั้งค่าด่วนสำหรับการใส่สูตรผลรวม AutoSum, การตั้งค่าการจัดรูปแบบตาราง, เปลี่ยนโหมดฟิลเตอร์ข้อมูล",
+    thPadKey: "คีย์บนบอร์ด",
+    thDetCode: "รหัสคีย์จริง (Detected)",
+    thAssignment: "คำสั่งที่ผูกไว้",
+    thFirmware: "ข้อมูล Firmware Pack (Hex)",
+    thStatus: "สถานะ",
+    
+    // Switch sounds tooltips
+    swOff: "ปิดเสียงคีย์บอร์ดจำลอง",
+    swClicky: "เปิดเสียง Clicky (Blue Switch) แบบสมจริง",
+    swTactile: "เปิดเสียง Tactile (Brown Switch) แบบสัมผัสนุ่ม",
+    swLinear: "เปิดเสียง Linear (Red Switch) แบบลื่นไร้เสียงลั่น",
+    
+    // Editor Form Elements
+    editorKeyTitle: "การผูกคำสั่งคีย์:",
+    modifierTitle: "ปุ่มพิเศษช่วย (Modifiers):",
+    btnCapture: "⌨ เรียนรู้คำคีย์จริง",
+    btnCapturing: "⏳ กดปุ่มคีย์บอร์ดกายภาพ...",
+    optShortcut: "⌨ คำสั่งลัด (Shortcuts)",
+    optMedia: "🎵 ปุ่มความบันเทิง (Media)",
+    optMacro: "📝 มาโครขั้นสูง (Macro)",
+    optApp: "🖥 แอปพลิเคชันระบบ (App)",
+    labelShortcut: "ปุ่มคีย์หลัก",
+    labelDisplay: "ข้อความที่จะแสดงบนปุ่มจำลอง",
+    labelMedia: "คำสั่งมีเดียหลัก",
+    labelMacro: "ขั้นตอนคำสั่งมาโครชุด",
+    labelDelay: "ระยะเวลาความหน่วงเริ่มต้นระหว่างขั้นตอน (ms)",
+    labelApp: "โปรแกรมระบบที่คุณต้องการผูกด่วน",
+    btnSave: "✓ บันทึกการตั้งค่าลงโปรไฟล์บอร์ด",
+    btnDeleteKey: "✕ ล้างคำสั่งปุ่มนี้เป็นค่าว่าง",
+    btnDeletePhysical: "⌫ เคลียร์การแมปคีย์กายภาพจากบอร์ดจริง"
+  },
+  en: {
+    title: "⌨️ Smart Keypad Configuration Tool",
+    subtitle: "6-Key Pad + Knob Encoder · MINI KeyBoard · Premium Pro · Drag-drop and Switch Sound Simulator",
+    liveDetectOn: "Live Detection ON (Active)",
+    liveDetectOff: "Live Detection OFF (Dormant)",
+    btnConnect: "Connect WebHID USB",
+    lastInput: "Last input:",
+    pressPad: "press a key on your pad…",
+    presets: "⚡ Load Preset Profiles",
+    newProfile: "＋ New Profile",
+    saveCopy: "💾 Save Copy",
+    rename: "✏ Rename",
+    delete: "🗑 Delete",
+    layoutTitle: "Device Layout — click a key to configure it &nbsp;·&nbsp; Drag actions onto keys",
+    layoutSubtitle: "Click any key/knob or drag action cards from the palette onto the visual keycaps below to assign actions!",
+    knobTop: "Knob Controller",
+    knobBadge: "PRESS",
+    turn: "turn",
+    tableTitle: "Key Map & Hex Firmware Pack Table",
+    tableSubtitle: "Shows detailed physical bindings, assigned shortcuts, and Hex values compiled for device writing.",
+    paletteTitle: "Action Palette (Drag & Drop)",
+    paletteSubtitle: "Drag these popular commands directly onto K1-K6 or the Knob in the visual layout to map them instantly.",
+    tabShortcuts: "⌨️ Shortcuts",
+    tabMedia: "🎵 Media Keys",
+    tabApps: "📁 System Apps",
+    tabMacros: "📝 Custom Macros",
+    editorTitle: "Key & Knob Editor",
+    editorEmpty: "👆 Click any key/knob or drag an action card from the palette to begin.",
+    ledTitle: "Visual Backlight Simulator",
+    ledSubtitle: "Simulates keycap LED colors and breathing styles on your screen layout. Changes will render visually in real time.",
+    ledMode: "Lighting Mode",
+    optStatic: "Solid Static Light",
+    optBreathe: "Slow Breathing Pulse",
+    optRainbow: "Rainbow Flow Cycle",
+    optPulse: "Dynamic Neon Pulse",
+    optOff: "Backlight LED Off",
+    ledColor: "Glow Accent Color",
+    ledBrightness: "Intensity / Brightness",
+    ahkTitle: "🖱 AutoHotkey Helper (AHK)",
+    ahkSubtitle: "Complex mouse clicks and scrolls cannot be triggered by the keyboard hardware alone. Download and run this custom AHK v2 companion.",
+    btnDownloadAhk: "💾 Download .ahk Script",
+    btnPreviewAhk: "👁 View AHK Code",
+    writeTitle: "Profile Backup & Restore",
+    sendTitle: "Upload Config to Keypad Dongle",
+    notConnected: "Device not connected. Connect via WebHID above.",
+    sendSuccess: "✓ Successfully synced config to keypad memory!",
+    sendLayer: "🔄 Write Configuration to Active Device Layer",
+    advDiagnostics: "Advanced Diagnostics Console",
+    modalPresets: "⚡ Load professional templates for work, gaming, and production",
+    pMedia: "🎵 Entertainment & Audio Control",
+    pMediaDesc: "Keys: Play/Pause, Next Track, Mute, Volume adjustments. Knob: Master Volume.",
+    pProd: "⚡ Professional Office Productivity",
+    pProdDesc: "Keys: Undo, Redo, Copy, Paste, Save, and Snipping Tool (Screenshot).",
+    pCreative: "🎨 Adobe Photoshop Designer Suite",
+    pCreativeDesc: "Keys: Cancel, Zoom In, Zoom Out, Brush Resize (+ / -), Save.",
+    pBrowser: "🌐 Web Navigation & Browsing",
+    pBrowserDesc: "Keys: New Tab, Close Tab, Refresh, Page Back, Page Forward, Open DevTools.",
+    pGaming: "🎮 Streaming OBS & Gamer Macros",
+    pGamingDesc: "Keys: Discord microphone mute, OBS scene swapper, capture screen clip, Guild PTT.",
+    pCoding: "📊 Spreadsheet Data & Programming",
+    pCodingDesc: "Keys: Excel AutoSum, Table cell properties, Toggle Filter rules, AutoSave.",
+    thPadKey: "Pad Key",
+    thDetCode: "Detected Code",
+    thAssignment: "Assignment",
+    thFirmware: "Hex Packet",
+    thStatus: "Status",
+    swOff: "Mute switch simulator sounds",
+    swClicky: "Enable clicky Blue Switch mechanical sound",
+    swTactile: "Enable tactile Brown Switch mechanical sound",
+    swLinear: "Enable linear Red Switch mechanical sound",
+    editorKeyTitle: "Select Key Action type:",
+    modifierTitle: "Modifier keys (Combo):",
+    btnCapture: "⌨ Capture Key",
+    btnCapturing: "⏳ Press physical key now...",
+    optShortcut: "⌨ Shortcuts",
+    optMedia: "🎵 Media",
+    optMacro: "📝 Custom Macro",
+    optApp: "🖥 System Apps",
+    labelShortcut: "Primary Key",
+    labelDisplay: "Button Display Label",
+    labelMedia: "Media Command",
+    labelMacro: "Macro Steps List",
+    labelDelay: "Default Step Delay (ms)",
+    labelApp: "Select System App shortcut",
+    btnSave: "✓ Save Config to Active Profile",
+    btnDeleteKey: "✕ Reset Key Assignment to Null",
+    btnDeletePhysical: "⌫ Clear physical detected mapping"
+  }
+};
+
+let currentLang = 'th';
+
+// Simple Translate function
+function t(key) {
+  return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+}
+
+function updateLanguageUI() {
+  document.getElementById('t-header-title').textContent = t('title');
+  document.getElementById('t-header-subtitle').textContent = t('subtitle');
+  document.getElementById('t-btn-connect').textContent = t('btnConnect');
+  document.getElementById('t-last-input').textContent = t('lastInput');
+  if (document.querySelector('.no-input-msg')) {
+    document.querySelector('.no-input-msg').textContent = t('pressPad');
+  }
+  document.getElementById('t-layout-title').textContent = t('layoutTitle');
+  document.getElementById('t-layout-subtitle').textContent = t('layoutSubtitle');
+  document.getElementById('t-knob-top').textContent = t('knobTop');
+  document.getElementById('t-knob-badge').textContent = t('knobBadge');
+  document.getElementById('t-turn').textContent = t('turn');
+  document.getElementById('t-table-title').textContent = t('tableTitle');
+  document.getElementById('t-table-subtitle').textContent = t('tableSubtitle');
+  document.getElementById('t-palette-title').textContent = t('paletteTitle');
+  document.getElementById('t-palette-subtitle').textContent = t('paletteSubtitle');
+  document.getElementById('tab-shortcuts').textContent = t('tabShortcuts');
+  document.getElementById('tab-media').textContent = t('tabMedia');
+  document.getElementById('tab-apps').textContent = t('tabApps');
+  document.getElementById('tab-macros').textContent = t('tabMacros');
+  document.getElementById('t-editor-title').textContent = t('editorTitle');
+  if (document.querySelector('.no-sel')) {
+    document.querySelector('.no-sel').textContent = t('editorEmpty');
+  }
+  document.getElementById('t-led-title').textContent = t('ledTitle');
+  document.getElementById('t-led-subtitle').textContent = t('ledSubtitle');
+  document.getElementById('t-led-mode').textContent = t('ledMode');
+  document.getElementById('opt-static').textContent = t('optStatic');
+  document.getElementById('opt-breathe').textContent = t('optBreathe');
+  document.getElementById('opt-rainbow').textContent = t('optRainbow');
+  document.getElementById('opt-pulse').textContent = t('optPulse');
+  document.getElementById('opt-off').textContent = t('optOff');
+  document.getElementById('t-led-color').textContent = t('ledColor');
+  document.getElementById('t-led-brightness').textContent = t('ledBrightness');
+  document.getElementById('t-ahk-title').textContent = t('ahkTitle');
+  document.getElementById('t-ahk-subtitle').textContent = t('ahkSubtitle');
+  document.getElementById('t-btn-download-ahk').textContent = t('btnDownloadAhk');
+  document.getElementById('t-btn-preview-ahk').textContent = t('btnPreviewAhk');
+  document.getElementById('t-write-title').textContent = t('writeTitle');
+  document.getElementById('t-send-title').textContent = t('sendTitle');
+  document.getElementById('btn-send-config').textContent = t('sendLayer');
+  document.getElementById('t-adv-diagnostics').textContent = t('advDiagnostics');
+  document.getElementById('t-modal-presets').textContent = t('modalPresets');
+  document.getElementById('t-p-media').textContent = t('pMedia');
+  document.getElementById('t-p-media-desc').textContent = t('pMediaDesc');
+  document.getElementById('t-p-prod').textContent = t('pProd');
+  document.getElementById('t-p-prod-desc').textContent = t('pProdDesc');
+  document.getElementById('t-p-creative').textContent = t('pCreative');
+  document.getElementById('t-p-creative-desc').textContent = t('pCreativeDesc');
+  document.getElementById('t-p-browser').textContent = t('pBrowser');
+  document.getElementById('t-p-browser-desc').textContent = t('pBrowserDesc');
+  document.getElementById('t-p-gaming').textContent = t('pGaming');
+  document.getElementById('t-p-gaming-desc').textContent = t('pGamingDesc');
+  document.getElementById('t-p-coding').textContent = t('pCoding');
+  document.getElementById('t-p-coding-desc').textContent = t('pCodingDesc');
+  
+  document.getElementById('th-pad-key').textContent = t('thPadKey');
+  document.getElementById('th-det-code').textContent = t('thDetCode');
+  document.getElementById('th-assignment').textContent = t('thAssignment');
+  document.getElementById('th-firmware').textContent = t('thFirmware');
+  document.getElementById('th-status').textContent = t('thStatus');
+  
+  document.getElementById('sw-off').setAttribute('data-tooltip', t('swOff'));
+  document.getElementById('sw-clicky').setAttribute('data-tooltip', t('swClicky'));
+  document.getElementById('sw-tactile').setAttribute('data-tooltip', t('swTactile'));
+  document.getElementById('sw-linear').setAttribute('data-tooltip', t('swLinear'));
+
+  // Update detectMode UI status label
+  const label = document.getElementById('detect-label');
+  if (label) {
+    label.textContent = detectMode ? t('liveDetectOn') : t('liveDetectOff');
+  }
+
+  // Refresh dynamic parts
+  refreshProfileUI();
+  switchPaletteTab(activePaletteTab);
+  if (selectedId) renderEditor();
+  refreshMapTable();
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  document.getElementById('lang-th').classList.toggle('active', lang === 'th');
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  updateLanguageUI();
+  showToast(lang === 'th' ? "เปลี่ยนภาษาสำเร็จ!" : "Language Switched!");
+}
+
+// ── TOAST NOTIFICATION HELPERS ──
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = message;
+  toast.classList.add('active');
+  setTimeout(() => { toast.classList.remove('active'); }, 2000);
+}
+
+// ── THEME MANAGER ──
+function setTheme(theme) {
+  document.body.className = theme === 'light' ? 'theme-light' : '';
+  document.getElementById('th-dark').classList.toggle('active', theme === 'dark');
+  document.getElementById('th-light').classList.toggle('active', theme === 'light');
+  showToast(theme === 'light' ? "เปิดโหมดสว่าง" : "เปิดโหมดมืด");
+}
+
+// ── MECHANICAL SWITCH AUDIO SYNTHESIZER ──
+let switchSoundType = 'off';
+
+function setSwitchSound(type) {
+  switchSoundType = type;
+  document.getElementById('sw-off').classList.toggle('active', type === 'off');
+  document.getElementById('sw-clicky').classList.toggle('active', type === 'clicky');
+  document.getElementById('sw-tactile').classList.toggle('active', type === 'tactile');
+  document.getElementById('sw-linear').classList.toggle('active', type === 'linear');
+  if (type !== 'off') {
+    playSwitchSound();
+  }
+}
+
+function playSwitchSound() {
+  if (switchSoundType === 'off') return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    if (switchSoundType === 'clicky') {
+      // Clicky (Blue Switch) sound synthesis
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(120, ctx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.008);
+      osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.04);
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(900, ctx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.004);
+      osc2.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.025);
+
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.045);
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc1.start(); osc2.start();
+      osc1.stop(ctx.currentTime + 0.045);
+      osc2.stop(ctx.currentTime + 0.045);
+      
+    } else if (switchSoundType === 'tactile') {
+      // Tactile (Brown Switch) sound synthesis
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.012);
+      osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.035);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, ctx.currentTime);
+
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+      
+    } else if (switchSoundType === 'linear') {
+      // Linear (Red Switch) sound synthesis
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(80, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.008);
+      osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.03);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(450, ctx.currentTime);
+
+      gainNode.gain.setValueAtTime(0.22, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.035);
+    }
+  } catch (e) {}
+}
+
+// ── HTML5 DRAG & DROP ACTION PALETTE ──
+let activePaletteTab = 'shortcuts';
+
+const DRAG_ACTIONS = {
+  shortcuts: [
+    { icon: "📋", title: "Copy (คัดลอก)", type: "shortcut", label: "Copy", shortcut: { mods: ["Ctrl"], key: "C" } },
+    { icon: "📥", title: "Paste (วาง)", type: "shortcut", label: "Paste", shortcut: { mods: ["Ctrl"], key: "V" } },
+    { icon: "↩️", title: "Undo (เลิกทำ)", type: "shortcut", label: "Undo", shortcut: { mods: ["Ctrl"], key: "Z" } },
+    { icon: "↪️", title: "Redo (ทำซ้ำ)", type: "shortcut", label: "Redo", shortcut: { mods: ["Ctrl"], key: "Y" } },
+    { icon: "💾", title: "Save (เซฟ)", type: "shortcut", label: "Save", shortcut: { mods: ["Ctrl"], key: "S" } },
+    { icon: "🖨️", title: "Print (พิมพ์)", type: "shortcut", label: "Print", shortcut: { mods: ["Ctrl"], key: "P" } },
+    { icon: "🔍", title: "Find (ค้นหา)", type: "shortcut", label: "Find", shortcut: { mods: ["Ctrl"], key: "F" } },
+    { icon: "🖥️", title: "Select All (เลือกหมด)", type: "shortcut", label: "Sel All", shortcut: { mods: ["Ctrl"], key: "A" } },
+    { icon: "🗑️", title: "Delete (ลบ)", type: "shortcut", label: "Delete", shortcut: { mods: [], key: "Delete" } },
+    { icon: "🚪", title: "Escape (ยกเลิก)", type: "shortcut", label: "Escape", shortcut: { mods: [], key: "Escape" } },
+  ],
+  media: [
+    { icon: "⏯️", title: "Play/Pause", type: "media", label: "Play/Pause", media: "play_pause" },
+    { icon: "🔊", title: "Volume Up", type: "media", label: "Vol +", media: "vol_up" },
+    { icon: "🔉", title: "Volume Down", type: "media", label: "Vol -", media: "vol_down" },
+    { icon: "🔇", title: "Mute Sound", type: "media", label: "Mute", media: "mute" },
+    { icon: "⏭️", title: "Next Track", type: "media", label: "Next", media: "next" },
+    { icon: "⏮️", title: "Prev Track", type: "media", label: "Prev", media: "prev" },
+    { icon: "⏹️", title: "Stop", type: "media", label: "Stop", media: "stop" },
+    { icon: "☀️", title: "Brightness +", type: "media", label: "Bright+", media: "bright_up" },
+    { icon: "🌤️", title: "Brightness -", type: "media", label: "Bright-", media: "bright_down" }
+  ],
+  apps: [
+    { icon: "📷", title: "Screenshot", type: "app", label: "Capture", app: "screenshot" },
+    { icon: "📊", title: "Task Manager", type: "app", label: "Task Mgr", app: "task_mgr" },
+    { icon: "📁", title: "File Explorer", type: "app", label: "Explorer", app: "explorer" },
+    { icon: "🔒", title: "Lock Windows", type: "app", label: "Lock PC", app: "lock" },
+    { icon: "🖥️", title: "Task View", type: "app", label: "TaskView", app: "taskview" },
+    { icon: "🔍", title: "Search Win", type: "app", label: "Search", app: "search" }
+  ],
+  macros: [
+    { icon: "📝", title: "Double Paste Macro", type: "macro", label: "Dbl Paste", steps: [{type:"combo", mods:["Ctrl"], key:"V"}, {type:"wait", ms:150}, {type:"combo", mods:["Ctrl"], key:"V"}], delay: 50 },
+    { icon: "📝", title: "Git Push Macro", type: "macro", label: "Git Push", steps: [{type:"text", text:"git push origin main"}, {type:"wait", ms:100}, {type:"combo", mods:[], key:"Return"}], delay: 50 },
+    { icon: "📝", title: "OBS Record Clip", type: "macro", label: "OBS Clip", steps: [{type:"combo", mods:["Ctrl","Alt","Shift"], key:"F10"}], delay: 50 }
+  ]
+};
+
+function switchPaletteTab(tabName) {
+  activePaletteTab = tabName;
+  document.querySelectorAll('.palette-tab').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('tab-' + tabName);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  const list = document.getElementById('palette-list');
+  const items = DRAG_ACTIONS[tabName] || [];
+  
+  list.innerHTML = items.map((item, idx) => {
+    return `<div class="drag-card" draggable="true" ondragstart="handleDragStart(event, '${tabName}', ${idx})">
+      <span class="drag-icon">${item.icon}</span>
+      <div class="drag-info">
+        <span class="drag-title">${item.title}</span>
+        <span class="drag-sub">${autoLabel(item)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function handleDragStart(ev, tab, index) {
+  const action = DRAG_ACTIONS[tab][index];
+  ev.dataTransfer.setData("application/json", JSON.stringify(action));
+  ev.dataTransfer.effectAllowed = "copy";
+}
+
+function handleDragOver(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(ev) {
+  ev.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(ev, keyId) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  
+  try {
+    const dataStr = ev.dataTransfer.getData("application/json");
+    if (!dataStr) return;
+    const action = JSON.parse(dataStr);
+    
+    // Assign to active profile
+    const lc = config[currentLayer] || {};
+    lc[keyId] = action;
+    config[currentLayer] = lc;
+    
+    // Play switch sound
+    playSwitchSound();
+    
+    // Save & Refresh
+    saveProfiles();
+    refreshDevice();
+    renderSummary();
+    if (selectedId === keyId) renderEditor();
+    
+    showToast(currentLang === 'th' ? "ลากวางสำเร็จ!" : "Assigned!");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ── VIRTUAL LED RGB BACKLIGHT CONTROLLER ──
+let ledConfig = {
+  mode: 'breathe',
+  color: '#00e5cc',
+  brightness: 65
+};
+
+function updateLEDMode(mode) {
+  ledConfig.mode = mode;
+  saveLEDSettings();
+  refreshLEDVisuals();
+}
+
+function updateLEDColor(color) {
+  ledConfig.color = color;
+  document.getElementById('led-color-picker').value = color;
+  saveLEDSettings();
+  refreshLEDVisuals();
+}
+
+function pickColorChip(color) {
+  updateLEDColor(color);
+}
+
+function updateLEDBrightness(val) {
+  ledConfig.brightness = parseInt(val, 10);
+  saveLEDSettings();
+  refreshLEDVisuals();
+}
+
+function saveLEDSettings() {
+  try {
+    localStorage.setItem('keypad-led-settings-v3', JSON.stringify(ledConfig));
+  } catch(e) {}
+}
+
+function loadLEDSettings() {
+  try {
+    const raw = localStorage.getItem('keypad-led-settings-v3');
+    if (raw) {
+      ledConfig = JSON.parse(raw);
+      document.getElementById('led-mode-select').value = ledConfig.mode;
+      document.getElementById('led-color-picker').value = ledConfig.color;
+      document.getElementById('led-brightness-slider').value = ledConfig.brightness;
+    }
+  } catch(e) {}
+}
+
+function refreshLEDVisuals() {
+  const glow = document.getElementById('device-led-glow');
+  const colorPickerGroup = document.getElementById('led-color-picker-group');
+  
+  if (glow) {
+    glow.style.setProperty('--led-color', ledConfig.color);
+    glow.style.setProperty('--led-opacity', ledConfig.mode === 'off' ? 0 : ledConfig.brightness / 100);
+    
+    // Remove all classes
+    glow.className = 'device-backglow';
+    if (ledConfig.mode === 'breathe') glow.classList.add('mode-breathe');
+    if (ledConfig.mode === 'rainbow') glow.classList.add('mode-rainbow');
+    if (ledConfig.mode === 'pulse') glow.classList.add('mode-pulse');
+  }
+  
+  // Hide color picker for Rainbow flow mode
+  if (colorPickerGroup) {
+    colorPickerGroup.style.display = ledConfig.mode === 'rainbow' ? 'none' : 'flex';
+  }
+}
+
+// ── DYNAMIC KEYCAP VISUAL STYLE CUSTOMIZER ──
+function updateKeycapStyles(keyId, field, value) {
+  const d = config[currentLayer][keyId] || {};
+  if (!d.style) d.style = {};
+  d.style[field] = value;
+  config[currentLayer][keyId] = d;
+  saveProfiles();
+  refreshDevice();
+  renderSummary();
+  if (selectedId === keyId) renderEditor();
+}
+
+// Preset dynamic linear gradient palettes for keycaps
+const PRESET_GRADIENTS = [
+  { name: "Cyan Spark", bg: "linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)", color: "#fff" },
+  { name: "Neon Violet", bg: "linear-gradient(135deg, #6c63ff 0%, #a8a4ff 100%)", color: "#fff" },
+  { name: "Sunset Blaze", bg: "linear-gradient(135deg, #ff6b6b 0%, #ff8a5a 100%)", color: "#fff" },
+  { name: "Acid Yellow", bg: "linear-gradient(135deg, #ffd93d 0%, #f7f197 100%)", color: "#111" },
+  { name: "Mint Fresh", bg: "linear-gradient(135deg, #00e676 0%, #66ffa6 100%)", color: "#111" },
+  { name: "Orchid Glow", bg: "linear-gradient(135deg, #e040fb 0%, #f48fb1 100%)", color: "#fff" }
+];
+
+// ── REAL-TIME AUDIT SCANNER (VALIDATION SYSTEM) ──
+let showAuditDetails = false;
+
+function toggleAuditDetails() {
+  showAuditDetails = !showAuditDetails;
+  document.getElementById('audit-list').style.display = showAuditDetails ? 'flex' : 'none';
+  const issues = auditActiveProfile();
+  document.getElementById('audit-trigger-txt').textContent = showAuditDetails
+    ? (currentLang === 'th' ? "ซ่อนรายละเอียด" : "Hide Details")
+    : (currentLang === 'th' ? `แสดงรายละเอียด (${issues.length})` : `Show Details (${issues.length})`);
+}
+
+function auditActiveProfile() {
+  const issues = [];
+  const lc = config[currentLayer] || {};
+  
+  ALL_IDS.forEach(kid => {
+    const d = lc[kid];
+    if (!d || d.type === 'null') {
+      issues.push(currentLang === 'th' ? `ปุ่ม ${kid} ยังไม่ได้รับการตั้งคำสั่งการทำงาน` : `Key ${kid} is currently unassigned.`);
+    } else {
+      if (d.type === 'macro') {
+        const steps = d.steps || [];
+        if (!steps.length) {
+          issues.push(currentLang === 'th' ? `มาโครของปุ่ม ${kid} ไม่มีขั้นตอนการทำงาน (ขั้นตอนว่างเปล่า)` : `Macro for ${kid} has 0 steps defined.`);
+        }
+      }
+      // Check physical key mapping
+      const code = getDetectedCodeForSlot(kid);
+      if (!code) {
+        issues.push(currentLang === 'th' ? `ปุ่ม ${kid} ยังไม่ได้ทำการแมปคีย์กายภาพจริง (คลิก Capture เพื่อแมป)` : `Key ${kid} has no physical hardware keycode mapped.`);
+      }
+    }
+  });
+
+  const dot = document.getElementById('audit-dot');
+  const text = document.getElementById('audit-text');
+  
+  if (issues.length === 0) {
+    if (dot) { dot.className = 'audit-dot'; }
+    if (text) { text.textContent = currentLang === 'th' ? "โปรไฟล์เรียบร้อยดี: ปุ่มครบถ้วนพร้อมใช้งาน" : "All looks good: Mappings are complete!"; }
+  } else {
+    if (dot) { dot.className = 'audit-dot warn'; }
+    if (text) { text.textContent = currentLang === 'th' ? `มีข้อแนะนำ ${issues.length} รายการ` : `Audit found ${issues.length} recommendation(s).`; }
+  }
+
+  const list = document.getElementById('audit-list');
+  if (list) {
+    list.innerHTML = issues.map(iss => `<li class="audit-issue-item">${iss}</li>`).join('');
+  }
+  
+  const trigger = document.getElementById('audit-trigger-txt');
+  if (trigger && !showAuditDetails) {
+    trigger.textContent = currentLang === 'th' ? `แสดงรายละเอียด (${issues.length})` : `Show Details (${issues.length})`;
+  }
+  
+  return issues;
+}
+
+// ── LIVE KEYBOARD MACRO RECORDER ──
+let isRecording = false;
+let recordStartTime = 0;
+let lastRecordTime = 0;
+
+function toggleMacroRecording() {
+  if (!selectedId) return;
+  const d = config[currentLayer][selectedId] || {};
+  if (d.type !== 'macro') return;
+  
+  isRecording = !isRecording;
+  
+  const btn = document.getElementById('btn-macro-record');
+  if (isRecording) {
+    recordStartTime = Date.now();
+    lastRecordTime = recordStartTime;
+    btn.textContent = currentLang === 'th' ? "⏹ หยุดบันทึกมาโคร" : "⏹ Stop Recording";
+    btn.classList.add('recording');
+    showToast(currentLang === 'th' ? "เริ่มบันทึก! พิมพ์คีย์บอร์ดของคุณได้เลย" : "Recording started! Type on your keyboard...");
+    
+    // Add dynamic live keyboard listener
+    window.addEventListener('keydown', captureLiveMacroKey);
+  } else {
+    btn.textContent = currentLang === 'th' ? "🔴 บันทึกมาโครสด" : "🔴 Record Live";
+    btn.classList.remove('recording');
+    window.removeEventListener('keydown', captureLiveMacroKey);
+    showToast(currentLang === 'th' ? "บันทึกและแปลงเรียบร้อยแล้ว!" : "Macro recorded successfully!");
+    renderEditor();
+  }
+}
+
+function captureLiveMacroKey(e) {
+  // Prevent standard typing action inside recorder form fields unless targeted at keyboard recording
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+  e.preventDefault();
+  
+  const now = Date.now();
+  const delay = now - lastRecordTime;
+  lastRecordTime = now;
+  
+  const d = config[currentLayer][selectedId] || {};
+  if (!d.steps) d.steps = [];
+  
+  // 1. Add wait delay step if natural delay is > 60ms
+  if (delay > 60 && d.steps.length > 0) {
+    d.steps.push({ type: 'wait', ms: Math.min(2500, delay) });
+  }
+  
+  // 2. Add combo key step
+  const mods = [];
+  if (e.ctrlKey) mods.push('Ctrl');
+  if (e.shiftKey) mods.push('Shift');
+  if (e.altKey) mods.push('Alt');
+  if (e.metaKey) mods.push('Win');
+  
+  // Convert standard key format to matches
+  let keyVal = e.key.toUpperCase();
+  if (keyVal === 'CONTROL') return;
+  if (keyVal === 'SHIFT') return;
+  if (keyVal === 'ALT') return;
+  if (keyVal === 'META') return;
+  if (keyVal === ' ') keyVal = 'Space';
+  if (keyVal === 'ENTER') keyVal = 'Return';
+  if (keyVal === 'ESCAPE') keyVal = 'Escape';
+  if (keyVal === 'BACKSPACE') keyVal = 'Backspace';
+  if (keyVal === 'TAB') keyVal = 'Tab';
+  if (keyVal === 'ARROWLEFT') keyVal = 'Left';
+  if (keyVal === 'ARROWRIGHT') keyVal = 'Right';
+  if (keyVal === 'ARROWUP') keyVal = 'Up';
+  if (keyVal === 'ARROWDOWN') keyVal = 'Down';
+  
+  d.steps.push({
+    type: 'combo',
+    mods: mods,
+    key: keyVal
+  });
+  
+  config[currentLayer][selectedId] = d;
+  
+  // Play dynamic visual switch sound
+  playSwitchSound();
+  
+  // Live update visual list inside recording panel if visible
+  const stepsList = document.getElementById('recorded-steps-summary');
+  if (stepsList) {
+    const text = mods.join('+') + (mods.length ? '+' : '') + keyVal;
+    stepsList.textContent = (currentLang === 'th' ? `จับภาพได้: ` : `Recorded: `) + text;
+  }
+}
+
+// ── ONBOARDING INTERACTIVE WALKTHROUGH TOUR ──
+let tourStep = 0;
+const TOUR_STEPS = [
+  { anchor: 'tour-anchor-1', title: '🔌 เชื่อมต่อบอร์ดจำลอง WebHID', desc: 'กดปุ่ม Connect WebHID เพื่อเลือกคู่สัญญาณและทำการเชื่อมต่อบอร์ดจริงของคุณเข้ากับซอฟต์แวร์ทันที บราวเซอร์จะซิงค์ข้อมูลกับอุปกรณ์ให้โดยอัตโนมัติ' },
+  { anchor: 'tour-anchor-2', title: '🎯 หน้าจอแสดงผลจำลอง', desc: 'คุณสามารถคลิกเลือกปุ่ม K1-K6 หรือ Knob หมุนและกด เพื่อเริ่มตั้งค่าใน Key Editor ได้เลย และยังสามารถลากการ์ดคำสั่งจากคลังลัดมาลงบนปุ่มนี้เพื่อความรวดเร็วได้ด้วย!' },
+  { anchor: 'tour-anchor-3', title: '⌨️ คลังคำสั่งและระบบลากวาง', desc: 'รวมคีย์ลัด ปุ่มมีเดียเปิดเพลง แอปพลิเคชัน หรือมาโครชุด ดึงไปวางบนปุ่มจริงเพื่อแมปฟังก์ชันได้ฉับพลัน!' },
+  { anchor: 'tour-anchor-4', title: '🌈 ปรับแสงสีคีย์บอร์ดของคุณ', desc: 'เลือกโหมดไฟจำลอง ปรับระดับสีพาสเทล หรือ Neon gradient และความสว่าง เพื่อแสดงแสงสีไฟพรีวิวด้านหลัง และดาวน์โหลดสคริปต์มาโครช่วย .ahk เพื่อรันใช้งานได้เลย!' }
+];
+
+function startTour() {
+  tourStep = 0;
+  document.getElementById('tour-mask').style.display = 'block';
+  showTourStep();
+}
+
+function skipTour() {
+  document.getElementById('tour-mask').style.display = 'none';
+  document.getElementById('tour-box').style.display = 'none';
+  showToast(currentLang === 'th' ? "ข้ามทัวร์แนะนำ" : "Tour Skipped");
+}
+
+function nextTourStep() {
+  tourStep++;
+  if (tourStep >= TOUR_STEPS.length) {
+    skipTour();
+    showToast(currentLang === 'th' ? "แนะนำตัวสำเร็จแล้ว! ยินดีต้อนรับ" : "Tour Completed!");
+  } else {
+    showTourStep();
+  }
+}
+
+function showTourStep() {
+  const step = TOUR_STEPS[tourStep];
+  const box = document.getElementById('tour-box');
+  const anchor = document.getElementById(step.anchor);
+  
+  if (!anchor) return;
+  
+  // Highlight/position box near target element
+  const rect = anchor.getBoundingClientRect();
+  box.style.display = 'flex';
+  box.style.position = 'absolute';
+  
+  // Adjust spacing
+  box.style.top = (rect.top + window.scrollY - 30) + 'px';
+  box.style.left = (rect.left + window.scrollX + rect.width / 2 - 170) + 'px';
+  
+  // Handle margins of box
+  if (tourStep === 3) {
+    box.style.top = (rect.top + window.scrollY - 200) + 'px';
+  }
+
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-desc').textContent = step.desc;
+  
+  // Update tour dots
+  const dots = document.getElementById('tour-dots');
+  dots.innerHTML = TOUR_STEPS.map((s, idx) => {
+    return `<span class="tour-dot ${idx === tourStep ? 'active' : ''}"></span>`;
+  }).join('');
+
+  document.getElementById('tour-next-btn').textContent = tourStep === TOUR_STEPS.length - 1 ? (currentLang === 'th' ? 'เสร็จสิ้น' : 'Done') : (currentLang === 'th' ? 'ถัดไป' : 'Next');
+}
+
+// ── COLLAPSIBLE LAYOUT CARD ──
+function toggleLayoutCard() {
+  const body    = document.getElementById('layout-body');
+  const chevron = document.getElementById('layout-chevron');
+  const isOpen  = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function toggleKeyMapCard() {
+  const body    = document.getElementById('keymap-body');
+  const chevron = document.getElementById('keymap-chevron');
+  const isOpen  = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+// ── STATE VARIABLES ──
+let currentLayer  = 1;
+let selectedId    = null;
+let detectMode    = false;
+let captureMode   = false;   // waiting to capture next keypress for selectedId
+let hidDevice     = null;
+
+/// config[keyId] = { type, label, shortcut:{mods,key}, media, macro, delay, app, style:{bg, color, emoji} }
+const config = { 1: {} };
+
+const KEY_IDS  = ['K1','K2','K3','K4','K5','K6'];
+const KNOB_IDS = ['knob-left','knob-click','knob-right'];
+const ALL_IDS  = [...KEY_IDS, ...KNOB_IDS];
+
+// Maps detected key codes → pad key IDs (populated at runtime via capture)
+const codeToKeyId = {};
+const STORAGE_KEY = 'macro-keypad-standalone-v1';
+
+// Preset-to-theme mapping (applied when a preset is loaded)
+const PRESET_THEMES = {
+  media:'preset-media', productivity:'preset-productivity',
+  photoshop:'preset-photoshop', browser:'preset-browser',
+  gaming:'preset-gaming', excel:'preset-excel'
+};
+function applyPresetTheme(name) {
+  // Let virtual light control handle actual glows, preset theme visualizes backgrounds
+}
+
+// ── MEDIA / APP DEFS ──
+const MEDIA = [
+  {id:'play_pause',icon:'⏯',label:'Play/Pause'},{id:'stop',icon:'⏹',label:'Stop'},
+  {id:'prev',icon:'⏮',label:'Prev'},{id:'next',icon:'⏭',label:'Next'},
+  {id:'vol_up',icon:'🔊',label:'Vol Up'},{id:'vol_down',icon:'🔉',label:'Vol Down'},
+  {id:'mute',icon:'🔇',label:'Mute'},{id:'bright_up',icon:'☀️',label:'Bright+'},
+  {id:'bright_down',icon:'🌤',label:'Bright–'},
+];
+const APPS = [
+  {id:'screenshot',icon:'📷',label:'Screenshot',shortcut:{mods:['Win','Shift'],key:'S'}},
+  {id:'task_mgr',icon:'📊',label:'Task Mgr',shortcut:{mods:['Ctrl','Shift'],key:'Esc'}},
+  {id:'explorer',icon:'📁',label:'Explorer',shortcut:{mods:['Win'],key:'E'}},
+  {id:'lock',icon:'🔒',label:'Lock PC',shortcut:{mods:['Win'],key:'L'}},
+  {id:'taskview',icon:'🖥',label:'Task View',shortcut:{mods:['Win'],key:'Tab'}},
+  {id:'search',icon:'🔍',label:'Search',shortcut:{mods:['Win'],key:'S'}},
+];
+
+const PRESETS = {
+  media:       {K1:{type:'media',label:'Play/Pause',media:'play_pause',style:{bg:'linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)', emoji:'⏯'}},K2:{type:'media',label:'Vol Up',media:'vol_up',style:{bg:'linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)', emoji:'🔊'}},K3:{type:'media',label:'Mute',media:'mute',style:{bg:'linear-gradient(135deg, #ff6b6b 0%, #ff8a5a 100%)', emoji:'🔇'}},K4:{type:'media',label:'Prev',media:'prev',style:{bg:'linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)', emoji:'⏮'}},K5:{type:'media',label:'Vol Down',media:'vol_down',style:{bg:'linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)', emoji:'🔉'}},K6:{type:'media',label:'Next',media:'next',style:{bg:'linear-gradient(135deg, #00d4aa 0%, #00e5cc 100%)', emoji:'⏭'}},'knob-left':{type:'media',label:'Vol –',media:'vol_down'},'knob-right':{type:'media',label:'Vol +',media:'vol_up'},'knob-click':{type:'media',label:'Mute',media:'mute'}},
+  productivity:{K1:{type:'shortcut',label:'Undo',shortcut:{mods:['Ctrl'],key:'Z'},style:{bg:'linear-gradient(135deg, #6c63ff 0%, #a8a4ff 100%)', emoji:'↩️'}},K2:{type:'shortcut',label:'Redo',shortcut:{mods:['Ctrl'],key:'Y'},style:{bg:'linear-gradient(135deg, #6c63ff 0%, #a8a4ff 100%)', emoji:'↪️'}},K3:{type:'shortcut',label:'Copy',shortcut:{mods:['Ctrl'],key:'C'},style:{bg:'linear-gradient(135deg, #6c63ff 0%, #a8a4ff 100%)', emoji:'📋'}},K4:{type:'shortcut',label:'Paste',shortcut:{mods:['Ctrl'],key:'V'},style:{bg:'linear-gradient(135deg, #6c63ff 0%, #a8a4ff 100%)', emoji:'📥'}},K5:{type:'shortcut',label:'Save',shortcut:{mods:['Ctrl'],key:'S'},style:{bg:'linear-gradient(135deg, #00e676 0%, #66ffa6 100%)', emoji:'💾'}},K6:{type:'shortcut',label:'Snip',shortcut:{mods:['Win','Shift'],key:'S'},style:{bg:'linear-gradient(135deg, #ff8a5a 0%, #ffb088 100%)', emoji:'📷'}},'knob-left':{type:'shortcut',label:'Undo',shortcut:{mods:['Ctrl'],key:'Z'}},'knob-right':{type:'shortcut',label:'Redo',shortcut:{mods:['Ctrl'],key:'Y'}},'knob-click':{type:'shortcut',label:'Sel All',shortcut:{mods:['Ctrl'],key:'A'}}},
+  photoshop:   {K1:{type:'shortcut',label:'Undo',shortcut:{mods:['Ctrl'],key:'Z'},style:{emoji:'↩️'}},K2:{type:'shortcut',label:'Zoom In',shortcut:{mods:['Ctrl'],key:'='},style:{emoji:'🔍'}},K3:{type:'shortcut',label:'Zoom Out',shortcut:{mods:['Ctrl'],key:'-'},style:{emoji:'🔍'}},K4:{type:'shortcut',label:'Brush+',shortcut:{mods:[],key:']'},style:{emoji:'🖌'}},K5:{type:'shortcut',label:'Brush–',shortcut:{mods:[],key:'['},style:{emoji:'🖌'}},K6:{type:'shortcut',label:'Save',shortcut:{mods:['Ctrl'],key:'S'},style:{emoji:'💾'}},'knob-left':{type:'shortcut',label:'Zoom Out',shortcut:{mods:['Ctrl'],key:'-'}},'knob-right':{type:'shortcut',label:'Zoom In',shortcut:{mods:['Ctrl'],key:'='}},'knob-click':{type:'shortcut',label:'Fit View',shortcut:{mods:['Ctrl'],key:'0'}}},
+  browser:     {K1:{type:'shortcut',label:'New Tab',shortcut:{mods:['Ctrl'],key:'T'},style:{emoji:'🌐'}},K2:{type:'shortcut',label:'Close Tab',shortcut:{mods:['Ctrl'],key:'W'},style:{emoji:'✕'}},K3:{type:'shortcut',label:'Refresh',shortcut:{mods:['Ctrl'],key:'R'},style:{emoji:'🔄'}},K4:{type:'shortcut',label:'Back',shortcut:{mods:['Alt'],key:'Left'},style:{emoji:'◀'}},K5:{type:'shortcut',label:'Forward',shortcut:{mods:['Alt'],key:'Right'},style:{emoji:'▶'}},K6:{type:'shortcut',label:'Dev Tools',shortcut:{mods:[],key:'F12'},style:{emoji:'🛠'}},'knob-left':{type:'shortcut',label:'Back',shortcut:{mods:['Alt'],key:'Left'}},'knob-right':{type:'shortcut',label:'Forward',shortcut:{mods:['Alt'],key:'Right'}},'knob-click':{type:'shortcut',label:'Refresh',shortcut:{mods:['Ctrl'],key:'R'}}},
+  gaming:      {K1:{type:'shortcut',label:'PTT',shortcut:{mods:[],key:'CapsLock'},style:{emoji:'🎤'}},K2:{type:'media',label:'Mute Mic',media:'mute',style:{emoji:'🔇'}},K3:{type:'shortcut',label:'Screenshot',shortcut:{mods:[],key:'F12'},style:{emoji:'📷'}},K4:{type:'shortcut',label:'NV Clip',shortcut:{mods:['Alt'],key:'F10'},style:{emoji:'🎥'}},K5:{type:'shortcut',label:'NV Share',shortcut:{mods:['Alt'],key:'Z'},style:{emoji:'⚙️'}},K6:{type:'shortcut',label:'Scoreboard',shortcut:{mods:[],key:'Tab'},style:{emoji:'📊'}},'knob-left':{type:'media',label:'Vol –',media:'vol_down'},'knob-right':{type:'media',label:'Vol +',media:'vol_up'},'knob-click':{type:'media',label:'Mute',media:'mute'}},
+  excel:       {K1:{type:'shortcut',label:'Undo',shortcut:{mods:['Ctrl'],key:'Z'},style:{emoji:'↩️'}},K2:{type:'shortcut',label:'Redo',shortcut:{mods:['Ctrl'],key:'Y'},style:{emoji:'↪️'}},K3:{type:'shortcut',label:'AutoSum',shortcut:{mods:['Alt'],key:'='},style:{emoji:'📊'}},K4:{type:'shortcut',label:'Format',shortcut:{mods:['Ctrl'],key:'1'},style:{emoji:'🛠'}},K5:{type:'shortcut',label:'Filter',shortcut:{mods:['Ctrl','Shift'],key:'L'},style:{emoji:'🔍'}},K6:{type:'shortcut',label:'Fill Down',shortcut:{mods:['Ctrl'],key:'D'},style:{emoji:'⬇️'}},'knob-left':{type:'shortcut',label:'Scroll ←',shortcut:{mods:['Alt'],key:'Page Down'}},'knob-right':{type:'shortcut',label:'Scroll →',shortcut:{mods:['Alt'],key:'Page Up'}},'knob-click':{type:'shortcut',label:'Sel All',shortcut:{mods:['Ctrl'],key:'A'}}},
+};
+
+// ── LIVE DETECTION ──
+function toggleDetect() {
+  detectMode = !detectMode;
+  const toggle = document.getElementById('detect-toggle');
+  const label  = document.getElementById('detect-label');
+  toggle.classList.toggle('active', detectMode);
+  label.textContent = detectMode ? t('liveDetectOn') : t('liveDetectOff');
+  document.getElementById('detect-hint').textContent =
+    detectMode ? (currentLang === 'th' ? "กดปุ่มบนบอร์ดจำลอง บอร์ดจะสว่างกะพริบตอบรับในทันที" : "Press keys on your pad — they will light up here") : '';
+  if (!detectMode) captureMode = false;
+}
+
+// Keyboard events
+window.addEventListener('keydown', handleKeyDown);
+
+function handleKeyDown(e) {
+  // Ignore modifiers only
+  if (!detectMode && !captureMode) return;
+  if (['Control','Shift','Alt','Meta','OS'].includes(e.key)) return;
+
+  // Don't intercept if user is typing in forms
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+  if (captureMode) e.preventDefault();
+
+  const code = e.code;
+  const key  = e.key;
+
+  showInLog(code);
+
+  if (captureMode && selectedId) {
+    setPhysicalMapping(selectedId, code);
+    captureMode = false;
+    refreshDevice();
+    renderEditor();
+    auditActiveProfile();
+    persistState();
+    return;
+  }
+
+  if (detectMode) {
+    const padKey = codeToKeyId[code];
+    if (padKey) {
+      flashPadKey(padKey);
+      playSwitchSound();
+    } else {
+      const autoMatch = autoMatchCode(code, key);
+      if (autoMatch) {
+        flashPadKey(autoMatch);
+        playSwitchSound();
+      }
+    }
+  }
+}
+
+function autoMatchCode(code, key) {
+  const fKeys = {F1:'K1',F2:'K2',F3:'K3',F4:'K4',F5:'K5',F6:'K6'};
+  if (fKeys[key]) {
+    if (!codeToKeyId[code]) {
+      setPhysicalMapping(fKeys[key], code, false);
+      persistState();
+    }
+    return fKeys[key];
+  }
+  return null;
+}
+
+function getDetectedCodeForSlot(kid) {
+  return Object.entries(codeToKeyId).find(([code, slot]) => slot === kid)?.[0] || '';
+}
+
+function setPhysicalMapping(kid, code, refreshTable = true) {
+  // Remove existing slot maps
+  Object.entries(codeToKeyId).forEach(([existingCode, slot]) => {
+    if (slot === kid && existingCode !== code) delete codeToKeyId[existingCode];
+  });
+  if (codeToKeyId[code] && codeToKeyId[code] !== kid) delete codeToKeyId[code];
+  codeToKeyId[code] = kid;
+  
+  if (refreshTable) refreshMapTable();
+}
+
+function clearPhysicalMapping() {
+  if (!selectedId) return;
+  let removed = false;
+  Object.entries(codeToKeyId).forEach(([code, slot]) => {
+    if (slot === selectedId) {
+      delete codeToKeyId[code];
+      removed = true;
+    }
+  });
+  
+  if (removed) {
+    persistState();
+    refreshDevice();
+    renderEditor();
+    refreshMapTable();
+    auditActiveProfile();
+    showToast(currentLang === 'th' ? "ล้างคีย์กายภาพเรียบร้อยแล้ว" : "Physical mapping cleared");
+  }
+}
+
+// ── WEBHID CONNECTOR ──
+let hidAuthorizedDevices = [];
+let hidDeviceIndex = -1;
+let _lastInputReports = [];
+
+async function listAuthorizedHIDDevices() {
+  if (!navigator.hid) return [];
+  const devs = await navigator.hid.getDevices();
+  return devs.filter(d => d.vendorId === 0x1189 && d.productId === 0x8890);
+}
+
+function scoreHIDDevice(d) {
+  let score = 0;
+  for (const col of (d.collections || [])) {
+    if (col.usagePage === 0xff00 && col.usage === 0x0001) score += 100;
+    if ((col.outputReports || []).some(r => r.reportId === 0x03)) score += 50;
+    if ((col.inputReports || []).some(r => r.reportId === 0x03)) score += 25;
+    if (col.usagePage === 0x000c && col.usage === 0x0001) score -= 25;
+    if (col.usagePage === 0x0001 && col.usage === 0x0006) score -= 10;
+  }
+  return score;
+}
+
+function describeCollections(device) {
+  const cols = device.collections || [];
+  if (!cols.length) return 'no collections exposed';
+  return cols.map((col, i) => {
+    const up = (col.usagePage ?? 0).toString(16).padStart(4,'0');
+    const u  = (col.usage ?? 0).toString(16).padStart(4,'0');
+    const outs = (col.outputReports || []).map(r => '0x' + r.reportId.toString(16).padStart(2,'0')).join(',');
+    const ins  = (col.inputReports || []).map(r => '0x' + r.reportId.toString(16).padStart(2,'0')).join(',');
+    return `[${i}] up=0x${up} u=0x${u} out=${outs||'-'} in=${ins||'-'}`;
+  }).join(' | ');
+}
+
+async function attachHIDDevice(device, indexHint = -1) {
+  if (!device) throw new Error('No HID device supplied');
+  if (hidDevice && hidDevice !== device && hidDevice.opened) {
+    try { await hidDevice.close(); } catch(e) {}
+  }
+  hidDevice = device;
+  hidDeviceIndex = indexHint;
+  _workingRid = 0x03;
+  _lastInputReports = [];
+  if (!hidDevice.opened) await hidDevice.open();
+
+  if (!hidDevice.__oai_listener_attached) {
+    hidDevice.addEventListener('inputreport', ({ reportId, data }) => {
+      const bytes = [...new Uint8Array(data.buffer)].map(b => b.toString(16).padStart(2,'0')).join(' ');
+      _lastInputReports.push({ ts: Date.now(), reportId, bytes });
+      while (_lastInputReports.length > 30) _lastInputReports.shift();
+      dongleLog(`← rpt 0x${reportId.toString(16).padStart(2,'0')}  ${bytes}`, 'var(--accent-secondary)');
+      if (detectMode) showInLog(`HID:${bytes}`);
+    });
+    hidDevice.__oai_listener_attached = true;
+  }
+
+  const btn = document.getElementById('hid-btn');
+  if (btn) {
+    btn.textContent = `✓ ${hidDevice.productName || 'Device'} Connected`;
+    btn.classList.add('connected');
+  }
+  updateDongleStatus();
+  dongleLog(`✓ WebHID Connected: ${hidDevice.productName || 'HID device'} · VID 0x${hidDevice.vendorId.toString(16).toUpperCase()} PID 0x${hidDevice.productId.toString(16).toUpperCase()}`, 'var(--accent-secondary)');
+  return hidDevice;
+}
+
+async function connectHID() {
+  const btn = document.getElementById('hid-btn');
+  if (!navigator.hid) {
+    btn.textContent = '⚠ WebHID not supported';
+    btn.classList.add('unavailable');
+    alert('WebHID is only supported in Chrome or Edge.\n\nOpen this file in Chrome/Edge for USB HID support.');
+    return;
+  }
+  try {
+    const requested = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x1189, productId: 0x8890 }] });
+    const authorized = await listAuthorizedHIDDevices();
+    hidAuthorizedDevices = authorized.length ? authorized : requested;
+    if (!hidAuthorizedDevices.length) return;
+
+    let bestIndex = 0;
+    let bestScore = -Infinity;
+    hidAuthorizedDevices.forEach((d, i) => {
+      const s = scoreHIDDevice(d);
+      if (s > bestScore) { bestScore = s; bestIndex = i; }
+    });
+
+    await attachHIDDevice(hidAuthorizedDevices[bestIndex], bestIndex);
+    showToast(currentLang === 'th' ? "เชื่อมต่อบอร์ดจริงผ่าน WebHID สำเร็จ!" : "Keypad connected via WebHID!");
+  } catch(err) {
+    if (err.name !== 'NotAllowedError') alert('Could not connect: ' + err.message);
+  }
+}
+
+async function cycleHIDDevice() {
+  if (!navigator.hid) return;
+  hidAuthorizedDevices = await listAuthorizedHIDDevices();
+  if (!hidAuthorizedDevices.length) {
+    dongleLog('⚠ No authorized HID devices. Click Connect WebHID first.', 'var(--accent-danger)');
+    return;
+  }
+  const nextIndex = hidDeviceIndex < 0 ? 0 : (hidDeviceIndex + 1) % hidAuthorizedDevices.length;
+  dongleLog(`↻ Cycling to HID device [${nextIndex}]`, 'var(--accent-warn)');
+  await attachHIDDevice(hidAuthorizedDevices[nextIndex], nextIndex);
+}
+
+async function reopenHIDDevice() {
+  if (!hidDevice) {
+    dongleLog('⚠ No current HID device. Click Connect WebHID first.', 'var(--accent-danger)');
+    return;
+  }
+  try {
+    if (hidDevice.opened) await hidDevice.close();
+    await new Promise(r => setTimeout(r, 600));
+    await hidDevice.open();
+    _workingRid = 0x03;
+    updateDongleStatus();
+    dongleLog('♻ Current HID device closed and reopened.', 'var(--accent-warn)');
+  } catch(err) {
+    dongleLog(`✗ reopen failed: ${err.message}`, 'var(--accent-danger)');
+  }
+}
+
+// ── REFRESH DEVICE LAYOUT PREVIEW ──
+const TC = {shortcut:'#6c63ff',media:'#00d4aa',macro:'#ffd93d',app:'#ff6b6b'};
+
+function refreshDevice() {
+  const lc = config[currentLayer] || {};
+  
+  KEY_IDS.forEach(kid => {
+    const cap = document.getElementById('cap-' + kid);
+    const lbl = document.getElementById('lbl-' + kid);
+    const emoji = document.getElementById('emoji-' + kid);
+    const d   = lc[kid];
+    const isCapturing = captureMode && selectedId === kid;
+    const isSelected  = selectedId === kid && !captureMode;
+
+    // Reset styles
+    cap.style.background = '';
+    cap.style.color = '';
+    cap.className = 'keycap'
+      + (isSelected  ? ' selected' : '')
+      + (isCapturing ? ' capturing' : '');
+
+    const oldPip = cap.querySelector('.type-pip');
+    if (oldPip) oldPip.remove();
+
+    if (isCapturing) {
+      lbl.textContent = currentLang === 'th' ? 'ยิงคีย์...' : 'Press key…';
+      lbl.className   = 'key-label capture-hint';
+      if (emoji) emoji.textContent = '⏳';
+    } else if (d && d.type !== 'null') {
+      lbl.textContent = d.label || autoLabel(d);
+      lbl.className   = 'key-label';
+      
+      // Inject Emojis/Icons decorated by Keycap customizer
+      if (emoji) {
+        emoji.textContent = d.style?.emoji || '';
+      }
+      
+      // Apply Custom Styled color background if available
+      if (d.style?.bg) {
+        cap.style.background = d.style.bg;
+      }
+      if (d.style?.color) {
+        cap.style.color = d.style.color;
+      }
+
+      const pip = document.createElement('span');
+      pip.className = 'type-pip';
+      pip.style.background = TC[d.type] || '#555';
+      cap.appendChild(pip);
+    } else {
+      lbl.textContent = '—';
+      lbl.className   = 'key-label empty';
+      if (emoji) emoji.textContent = '';
+    }
+  });
+
+  // Knob Click
+  const kb = document.getElementById('cap-knob-click');
+  if (kb) {
+    kb.className = 'knob-body' + (selectedId === 'knob-click' ? ' selected' : '');
+    const kc = lc['knob-click'];
+    document.getElementById('lbl-knob-click').textContent = (kc && kc.type !== 'null') ? (kc.label || autoLabel(kc)) : 'unassigned';
+  }
+
+  // Knob turns CCW / CW
+  ['left','right'].forEach(dir => {
+    const kid = 'knob-' + dir;
+    const btn = document.getElementById('cap-' + kid);
+    if (!btn) return;
+    const d   = lc[kid];
+    btn.className = 'knob-turn-btn'
+      + (selectedId === kid ? ' selected' : '')
+      + (captureMode && selectedId === kid ? ' capturing' : '')
+      + ((d && d.type !== 'null') ? ' assigned' : '');
+    
+    const fullLabel = (d && d.type !== 'null') ? (d.label || autoLabel(d)) : '—';
+    document.getElementById('lbl-' + kid).textContent = fullLabel;
+    
+    let tip = btn.querySelector('.knob-full-label');
+    if (!tip) { tip = document.createElement('span'); tip.className = 'knob-full-label'; btn.appendChild(tip); }
+    tip.textContent = fullLabel;
+  });
+  
+  auditActiveProfile();
+}
+
+function autoLabel(d) {
+  if (!d || d.type === 'null') return '—';
+  if (d.type==='shortcut' && d.shortcut) return [...(d.shortcut.mods||[]), d.shortcut.key].filter(Boolean).join('+');
+  if (d.type==='media') { const m=MEDIA.find(x=>x.id===d.media); return m?m.label:d.media||'?'; }
+  if (d.type==='macro') {
+    if (Array.isArray(d.steps) && d.steps.length) return macroStepsLabel(d.steps);
+    if (typeof d.macro === 'string' && d.macro.length) return 'Macro';
+    return 'Empty Macro';
+  }
+  if (d.type==='app')   { const a=APPS.find(x=>x.id===d.app);   return a?a.label:d.app||'?'; }
+  return '?';
+}
+
+function selectKey(id) {
+  captureMode = false;
+  selectedId  = id;
+  
+  // Dynamic audio switch click simulation
+  playSwitchSound();
+
+  // Highlight rotational Knob simulator if knob turned
+  const knobDot = document.getElementById('knob-rotate-dot');
+  if (knobDot) {
+    if (id === 'knob-left') {
+      knobDot.style.transform = 'translateX(-50%) rotate(-45deg)';
+    } else if (id === 'knob-right') {
+      knobDot.style.transform = 'translateX(-50%) rotate(45deg)';
+    } else {
+      knobDot.style.transform = 'translateX(-50%)';
+    }
+  }
+
+  refreshDevice();
+  renderEditor();
+}
+
+// ── EDITOR COMPONENT RENDERER ──
+function renderEditor() {
+  const body = document.getElementById('editor-body');
+  if (!selectedId) {
+    body.innerHTML = `<div class="no-sel">${t('editorEmpty')}</div>`;
+    return;
+  }
+  const d    = config[currentLayer][selectedId] || {};
+  const type = d.type || 'shortcut';
+  const isKnob = selectedId.startsWith('knob-');
+  const KNAMES = {'knob-left':'Knob CCW (Left turn)','knob-right':'Knob CW (Right turn)','knob-click':'Knob Press (Click)'};
+  const badge  = isKnob ? {'knob-left':'◀','knob-right':'▶','knob-click':'●'}[selectedId] : selectedId;
+  const isCapt = captureMode;
+
+  body.innerHTML = `
+    <div class="sel-header">
+      <div class="sel-badge">${badge}</div>
+      <div>
+        <div class="sel-title">${isKnob ? KNAMES[selectedId] : selectedId}</div>
+        <div class="sel-sub">${t('writeTitle')} - ${currentProfileName}</div>
+      </div>
+      <button class="capture-btn${isCapt?' capturing':''}" onclick="toggleCapture()" title="กดจับคู่รหัสปุ่มจริงจากบอร์ดเพื่อแมป">
+        ${isCapt ? t('btnCapturing') : t('btnCapture')}
+      </button>
+    </div>
+    
+    ${(()=>{
+      const detectedCode = Object.entries(codeToKeyId).find(([c,k])=>k===selectedId)?.[0];
+      if (detectedCode && !isCapt) {
+        return `<div style="font-size:11px;color:var(--accent-secondary);background:var(--accent-secondary-glow);border:1px solid rgba(0,212,170,.2);border-radius:8px;padding:6px 10px;margin-bottom:12px;font-weight:700;">
+          ✓ Physical Code: <strong>${detectedCode}</strong>
+        </div>`;
+      }
+      return '';
+    })()}
+
+    <!-- Keycap Visual Decal Customizer -->
+    ${!isKnob ? `
+    <div class="form-group" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:14px;">
+      <label class="form-label">🎨 ตกแต่งหน้าตาปุ่มคีย์แคปจำลอง (Decal Editor)</label>
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+        <label style="font-size:10px; width:70px; color:var(--text-secondary);">ไอคอน / Emoji</label>
+        <input type="text" class="form-input" style="width:60px; padding:4px; text-align:center; font-size:16px;" value="${d.style?.emoji || ''}" oninput="updateKeycapStyles('${selectedId}', 'emoji', this.value)" placeholder="e.g. 💾">
+      </div>
+      <div>
+        <label style="font-size:10px; color:var(--text-secondary); margin-bottom:4px; display:block;">สีปุ่มเรืองแสง (Gradient Themes)</label>
+        <div class="color-grid">
+          <span class="color-chip" style="background:#20202e; border:1px solid #4a4a66;" onclick="updateKeycapStyles('${selectedId}', 'bg', '');updateKeycapStyles('${selectedId}', 'color', '')"></span>
+          ${PRESET_GRADIENTS.map(g => {
+            return `<span class="color-chip" style="background:${g.bg};" onclick="updateKeycapStyles('${selectedId}', 'bg', '${g.bg}');updateKeycapStyles('${selectedId}', 'color', '${g.color}')"></span>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="type-tabs">
+      <div class="type-tab${type==='shortcut'?' active':''}" onclick="setType('shortcut')">${t('optShortcut')}</div>
+      <div class="type-tab${type==='media'?' active':''}" onclick="setType('media')">${t('optMedia')}</div>
+      <div class="type-tab${type==='macro'?' active':''}" onclick="setType('macro')">${t('optMacro')}</div>
+      <div class="type-tab${type==='app'?' active':''}" onclick="setType('app')">${t('optApp')}</div>
+    </div>
+
+    ${type==='shortcut'?edShortcut(d):''}
+    ${type==='media'   ?edMedia(d)   :''}
+    ${type==='macro'   ?edMacro(d)   :''}
+    ${type==='app'     ?edApp(d)     :''}
+
+    <div class="editor-actions">
+      <button class="save-btn" onclick="saveKey()">${t('btnSave')}</button>
+      <button class="clear-btn" onclick="clearPhysicalMapping()">${t('btnDeletePhysical')}</button>
+      <button class="clear-btn" style="border-color:var(--accent-danger); color:var(--accent-danger);" onclick="clearKey()">${t('btnDeleteKey')}</button>
+    </div>
+  `;
+}
+
+function toggleCapture() {
+  if (!selectedId) return;
+  captureMode = !captureMode;
+  if (captureMode && !detectMode) toggleDetect(); // auto-enable detect
+  refreshDevice();
+  renderEditor();
+}
+
+function edShortcut(d) {
+  const sc = d.shortcut || {mods:[],key:''};
+  return `
+    <div class="form-group">
+      <label class="form-label">${t('modifierTitle')}</label>
+      <div class="mod-row">
+        ${['Ctrl','Shift','Alt','Win'].map(m=>`<div class="mod-btn${(sc.mods||[]).includes(m)?' active':''}" onclick="toggleMod('${m}')">${m}</div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelShortcut')}</label>
+      <select class="form-select" id="key-sel">${buildKeyOptions(sc.key)}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelDisplay')}</label>
+      <input class="form-input" type="text" id="lbl-input" placeholder="e.g. Undo" value="${d.label||''}">
+    </div>`;
+}
+
+function edMedia(d) {
+  return `
+    <div class="form-group">
+      <label class="form-label">${t('labelMedia')}</label>
+      <div class="media-grid">
+        ${MEDIA.map(m=>`<div class="media-btn${d.media===m.id?' active':''}" onclick="pickMedia('${m.id}')"><div>${m.icon}</div><div class="media-lbl">${m.label}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelDisplay')}</label>
+      <input class="form-input" type="text" id="lbl-input" placeholder="e.g. Vol Up" value="${d.label||''}">
+    </div>
+    <input type="hidden" id="media-val" value="${d.media||''}">`;
+}
+
+function ensureSteps(d) {
+  if (!d) return [];
+  if (Array.isArray(d.steps)) return d.steps;
+  if (typeof d.macro === 'string' && d.macro.length) {
+    d.steps = [{ type:'text', text: d.macro }];
+  } else {
+    d.steps = [];
+  }
+  return d.steps;
+}
+
+function newStepOfType(type) {
+  switch(type) {
+    case 'text':  return { type:'text', text:'' };
+    case 'combo': return { type:'combo', mods:[], key:'' };
+    case 'click': return { type:'click', button:'left', useCoords:false, x:0, y:0 };
+    case 'wheel': return { type:'wheel', dir:'down', ticks:1 };
+    case 'wait':  return { type:'wait', ms:200 };
+  }
+  return null;
+}
+
+function describeStep(s) {
+  if (!s) return '?';
+  switch(s.type) {
+    case 'text':  return `Type "${(s.text||'').slice(0,18)}${(s.text||'').length>18?'…':''}"`;
+    case 'combo': return [...(s.mods||[]), s.key].filter(Boolean).join('+') || 'Key combo';
+    case 'click': {
+      const lbl = {left:'Left click',right:'Right click',middle:'Middle click',doubleLeft:'Dbl click'}[s.button] || 'Click';
+      return s.useCoords ? `${lbl} @ ${s.x},${s.y}` : lbl;
+    }
+    case 'wheel': {
+      if (s.dir === 'click') return 'Wheel click';
+      const arrow = s.dir === 'up' ? '↑' : '↓';
+      return `Wheel ${arrow} x${s.ticks||1}`;
+    }
+    case 'wait':  return `Wait ${s.ms||0}ms`;
+  }
+  return '?';
+}
+
+function macroStepsLabel(steps) {
+  if (!steps || !steps.length) return 'Empty macro';
+  if (steps.length === 1) return describeStep(steps[0]);
+  return `${steps.length} steps`;
+}
+
+function addStep(type) {
+  const d = config[currentLayer][selectedId] || {};
+  d.type = 'macro';
+  const steps = ensureSteps(d);
+  const s = newStepOfType(type);
+  if (s) steps.push(s);
+  config[currentLayer][selectedId] = d;
+  renderEditor();
+}
+
+function removeStep(idx) {
+  const d = config[currentLayer][selectedId] || {};
+  const steps = ensureSteps(d);
+  if (idx >= 0 && idx < steps.length) steps.splice(idx, 1);
+  renderEditor();
+}
+
+function moveStep(idx, dir) {
+  const d = config[currentLayer][selectedId] || {};
+  const steps = ensureSteps(d);
+  const j = idx + dir;
+  if (idx < 0 || idx >= steps.length || j < 0 || j >= steps.length) return;
+  [steps[idx], steps[j]] = [steps[j], steps[idx]];
+  renderEditor();
+}
+
+function updateStepField(idx, field, value) {
+  const d = config[currentLayer][selectedId] || {};
+  const steps = ensureSteps(d);
+  if (idx < 0 || idx >= steps.length) return;
+  if (field === 'ticks' || field === 'ms' || field === 'x' || field === 'y') {
+    value = parseInt(value, 10); if (isNaN(value)) value = 0;
+  }
+  if (field === 'useCoords') value = !!value;
+  steps[idx][field] = value;
+}
+
+function toggleStepMod(idx, mod) {
+  const d = config[currentLayer][selectedId] || {};
+  const steps = ensureSteps(d);
+  if (idx < 0 || idx >= steps.length) return;
+  const s = steps[idx];
+  if (!Array.isArray(s.mods)) s.mods = [];
+  const i = s.mods.indexOf(mod);
+  if (i >= 0) s.mods.splice(i, 1); else s.mods.push(mod);
+  renderEditor();
+}
+
+function escAttr(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderStepRow(s, idx, total) {
+  const num = `<div class="step-num">${idx+1}</div>`;
+  let body = '';
+  if (s.type === 'text') {
+    body = `
+      <div class="step-body-row">
+        <span class="step-type-pill step-type-text">Type</span>
+        <input class="step-input-mini full" type="text" placeholder="text to type"
+               value="${escAttr(s.text)}"
+               oninput="updateStepField(${idx},'text',this.value)">
+      </div>`;
+  } else if (s.type === 'combo') {
+    const mods = s.mods || [];
+    body = `
+      <div class="step-body-row">
+        <span class="step-type-pill step-type-combo">Combo</span>
+        <div class="step-mod-row">
+          ${['Ctrl','Shift','Alt','Win'].map(m=>`<span class="step-mod-btn${mods.includes(m)?' active':''}" onclick="toggleStepMod(${idx},'${m}')">${m}</span>`).join('')}
+        </div>
+        <select class="step-select-mini" onchange="updateStepField(${idx},'key',this.value);renderEditor()">
+          ${buildKeyOptions(s.key||'')}
+        </select>
+      </div>`;
+  } else if (s.type === 'click') {
+    const btn = s.button || 'left';
+    body = `
+      <div class="step-body-row">
+        <span class="step-type-pill step-type-click">Click</span>
+        <select class="step-select-mini" onchange="updateStepField(${idx},'button',this.value);renderEditor()">
+          <option value="left"${btn==='left'?' selected':''}>Left</option>
+          <option value="right"${btn==='right'?' selected':''}>Right</option>
+          <option value="middle"${btn==='middle'?' selected':''}>Middle</option>
+          <option value="doubleLeft"${btn==='doubleLeft'?' selected':''}>Double Left</option>
+        </select>
+        <label style="font-size:10px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">
+          <input type="checkbox"${s.useCoords?' checked':''} onchange="updateStepField(${idx},'useCoords',this.checked);renderEditor()">
+          fixed XY
+        </label>
+      </div>
+      ${s.useCoords ? `
+      <div class="step-body-row step-coord-row" style="margin-top:4px;">
+        <label style="font-size:10px; color:var(--text-secondary);">X <input class="step-input-mini step-input-num" type="number" value="${s.x||0}" oninput="updateStepField(${idx},'x',this.value)"></label>
+        <label style="font-size:10px; color:var(--text-secondary);">Y <input class="step-input-mini step-input-num" type="number" value="${s.y||0}" oninput="updateStepField(${idx},'y',this.value)"></label>
+      </div>` : ''}`;
+  } else if (s.type === 'wheel') {
+    const dir = s.dir || 'down';
+    body = `
+      <div class="step-body-row">
+        <span class="step-type-pill step-type-wheel">Wheel</span>
+        <select class="step-select-mini" onchange="updateStepField(${idx},'dir',this.value);renderEditor()">
+          <option value="up"${dir==='up'?' selected':''}>Up</option>
+          <option value="down"${dir==='down'?' selected':''}>Down</option>
+          <option value="click"${dir==='click'?' selected':''}>Click</option>
+        </select>
+        ${dir !== 'click' ? `
+          <label style="font-size:10px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">
+            ticks <input class="step-input-mini step-input-num" type="number" min="1" max="50" value="${s.ticks||1}" oninput="updateStepField(${idx},'ticks',this.value)">
+          </label>` : ''}
+      </div>`;
+  } else if (s.type === 'wait') {
+    body = `
+      <div class="step-body-row">
+        <span class="step-type-pill step-type-wait">Wait</span>
+        <input class="step-input-mini step-input-num" type="number" min="0" max="60000" value="${s.ms||0}" oninput="updateStepField(${idx},'ms',this.value)">
+        <span style="font-size:10px;color:var(--text-muted);">ms</span>
+      </div>`;
+  }
+  const controls = `
+    <div class="step-controls">
+      <button class="step-ctrl-btn" onclick="moveStep(${idx},-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
+      <button class="step-ctrl-btn del" onclick="removeStep(${idx})" title="Remove">✕</button>
+      <button class="step-ctrl-btn" onclick="moveStep(${idx},1)" ${idx===total-1?'disabled':''} title="Move down">▼</button>
+    </div>`;
+  return `<div class="step-row">${num}<div class="step-body">${body}</div>${controls}</div>`;
+}
+
+function edMacro(d) {
+  const steps = ensureSteps(d);
+  const trigger = MACRO_TRIGGERS[selectedId];
+  const triggerLbl = trigger ? `Ctrl+Alt+Shift+${trigger}` : '(unsupported)';
+  return `
+    <div class="record-panel">
+      <div class="record-status-group">
+        <span class="rec-dot" style="background:var(--accent-danger); ${isRecording?'animation:blink 1s step-end infinite;':''}"></span>
+        <span style="font-size:10.5px; font-weight:700; color:var(--text);" id="recorded-steps-summary">
+          ${isRecording ? "🔴 กำลังจับการกดคีย์บอร์ด..." : "ระบบบันทึกมาโครเรียลไทม์"}
+        </span>
+      </div>
+      <button class="record-btn${isRecording?' recording':''}" id="btn-macro-record" onclick="toggleMacroRecording()">
+        ${isRecording ? "⏹ หยุดบันทึก" : "🔴 บันทึกมาโครสด"}
+      </button>
+    </div>
+
+    <div class="step-info" style="font-size:10px; color:var(--text-muted); line-height:1.45; background:rgba(255,217,61,0.04); border:1px dashed var(--border); padding:8px; border-radius:8px; margin-bottom:12px;">
+      มาโครมาพร้อมกับสคริปต์ AHK บอร์ดคีย์บอร์ดจะส่งคำสั่งแฝง (<strong>${triggerLbl}</strong>) ซึ่ง AHK จะดักจับสัญญาณและประมวลผลมาโครตามสเตปด้านล่าง
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">${t('labelMacro')}</label>
+      <div class="step-toolbar">
+        <div class="step-add-btn" onclick="addStep('text')"><span>📝 Text</span></div>
+        <div class="step-add-btn" onclick="addStep('combo')"><span>⌨ Combo</span></div>
+        <div class="step-add-btn" onclick="addStep('click')"><span>🖱 Click</span></div>
+        <div class="step-add-btn" onclick="addStep('wheel')"><span>🎡 Wheel</span></div>
+        <div class="step-add-btn" onclick="addStep('wait')"><span>⏱ Wait</span></div>
+        <div class="step-add-btn" style="color:var(--accent-danger);" onclick="if(confirm('ล้างขั้นตอนทั้งหมด?')){const d=config[currentLayer][selectedId]||{};d.steps=[];renderEditor();}"><span>🗑 Clear</span></div>
+      </div>
+      <div class="step-list">
+        ${steps.length ? steps.map((s,i)=>renderStepRow(s,i,steps.length)).join('') : `<div class="step-list-empty">ยังไม่มีขั้นตอนการทำงาน — ลากหรือเลือกปุ่มเพิ่มด้านบนได้เลย!</div>`}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelDelay')}</label>
+      <input class="form-input" type="number" id="macro-delay" value="${d.delay||50}" min="0" max="5000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelDisplay')}</label>
+      <input class="form-input" type="text" id="lbl-input" placeholder="e.g. My Macro" value="${escAttr(d.label||'')}">
+    </div>`;
+}
+
+function edApp(d) {
+  return `
+    <div class="form-group">
+      <label class="form-label">${t('labelApp')}</label>
+      <div class="app-grid">
+        ${APPS.map(a=>`<div class="app-btn${d.app===a.id?' active':''}" onclick="pickApp('${a.id}')"><span>${a.icon}</span><span>${a.label}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('labelDisplay')}</label>
+      <input class="form-input" type="text" id="lbl-input" value="${d.label||''}">
+    </div>
+    <input type="hidden" id="app-val" value="${d.app||''}">`;
+}
+
+function buildKeyOptions(sel) {
+  const groups = {
+    'Function Keys':['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'],
+    'Letters':'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+    'Numbers':'0123456789'.split(''),
+    'Navigation':['Left','Right','Up','Down','Home','End','Page Up','Page Down','Insert','Delete'],
+    'Special':['Space','Tab','Return','Escape','Backspace','CapsLock','PrtSc'],
+    'Symbols':['`','-','=','[',']','\\',';',"'",'.',',',"/"],
+    'Numpad':['Num0','Num1','Num2','Num3','Num4','Num5','Num6','Num7','Num8','Num9'],
+  };
+  return '<option value="">-- Select key --</option>'+
+    Object.entries(groups).map(([g,keys])=>
+      `<optgroup label="${g}">${keys.map(k=>`<option value="${k}"${k===sel?' selected':''}>${k}</option>`).join('')}</optgroup>`
+    ).join('');
+}
+
+// ── EDITOR ACTIONS ──
+function setType(t) {
+  const d=config[currentLayer][selectedId]||{};
+  d.type=t; config[currentLayer][selectedId]=d; renderEditor();
+}
+
+function toggleMod(mod) {
+  const d=config[currentLayer][selectedId]||{};
+  if(!d.shortcut) d.shortcut={mods:[],key:''};
+  const i=d.shortcut.mods.indexOf(mod);
+  if(i>=0) d.shortcut.mods.splice(i,1); else d.shortcut.mods.push(mod);
+  config[currentLayer][selectedId]=d; renderEditor();
+}
+
+function pickMedia(id) {
+  const d=config[currentLayer][selectedId]||{};
+  d.media=id; d.type='media';
+  const m=MEDIA.find(x=>x.id===id); if(!d.label) d.label=m?m.label:id;
+  config[currentLayer][selectedId]=d;
+  document.getElementById('media-val').value=id;
+  renderEditor();
+}
+
+function pickApp(id) {
+  const d=config[currentLayer][selectedId]||{};
+  d.app=id; d.type='app';
+  const a=APPS.find(x=>x.id===id); if(!d.label) d.label=a?a.label:id; if(a) d.shortcut=a.shortcut;
+  config[currentLayer][selectedId]=d;
+  document.getElementById('app-val').value=id;
+  renderEditor();
+}
+
+function saveKey() {
+  if(!selectedId) return;
+  const d=config[currentLayer][selectedId]||{};
+  const type=d.type||'shortcut';
+  
+  if(type==='shortcut'){
+    const s=document.getElementById('key-sel'); 
+    if(!d.shortcut)d.shortcut={mods:[],key:''}; 
+    if(s)d.shortcut.key=s.value;
+  }
+  if(type==='media'){
+    const v=document.getElementById('media-val'); 
+    if(v)d.media=v.value;
+  }
+  if(type==='macro'){
+    ensureSteps(d);
+    const dl=document.getElementById('macro-delay'); 
+    if(dl) d.delay=parseInt(dl.value)||50;
+    if (d.steps && d.steps.length) delete d.macro;
+  }
+  if(type==='app'){
+    const v=document.getElementById('app-val'); 
+    if(v)d.app=v.value;
+  }
+  
+  const li=document.getElementById('lbl-input');
+  if(li&&li.value.trim()) d.label=li.value.trim(); else if(!d.label) d.label=autoLabel(d);
+  config[currentLayer][selectedId]=d;
+  
+  updateDetectedCodeTable(selectedId, getDetectedCodeForSlot(selectedId) || document.getElementById('mc-'+selectedId)?.textContent || '');
+  
+  playSwitchSound();
+  persistState();
+  refreshDevice();
+  renderSummary();
+  
+  showToast(currentLang === 'th' ? "บันทึกคีย์เรียบร้อย!" : "Key Saved!");
+}
+
+function clearKey() {
+  if(!selectedId) return;
+  delete config[currentLayer][selectedId]; 
+  selectedId=null; captureMode=false;
+  playSwitchSound();
+  persistState();
+  refreshDevice(); renderSummary(); renderEditor();
+  showToast(currentLang === 'th' ? "ล้างคำสั่งเรียบร้อย" : "Key cleared");
+}
+
+// ── SUMMARY & PRESETS ──
+function renderSummary() {
+  // Overridden in Block 2 setup
+}
+
+function loadPreset(name) {
+  // Overridden dynamically in Block 2 setup
+}
+
+// ── EXPORTS & BACKUP JSON ──
+function copyConfig() {
+  const kn={'knob-left':'Knob CCW','knob-right':'Knob CW','knob-click':'Knob Press'};
+  let out='=== MACRO KEYPAD CONFIGURATION ===\n\n';
+  ALL_IDS.forEach(k=>{
+    const d=config[1][k]; if(!d) return;
+    out+=`  ${kn[k]||k}: ${d.label||autoLabel(d)} [${d.type}]`;
+    if(d.type==='shortcut'&&d.shortcut) out+=` → ${[...(d.shortcut.mods||[]),d.shortcut.key].filter(Boolean).join('+')}`;
+    if(d.type==='media') out+=` → ${d.media}`;
+    if(d.type==='macro') {
+      if (Array.isArray(d.steps) && d.steps.length) {
+        out += ` → [${d.steps.map(s=>describeStep(s)).join(' · ')}] (trigger: Ctrl+Alt+Shift+${MACRO_TRIGGERS[k]||'?'})`;
+      } else if (typeof d.macro === 'string' && d.macro) {
+        out += ` → "${d.macro}"`;
+      }
+    }
+    out+='\n';
+  });
+  navigator.clipboard.writeText(out).catch(()=>{});
+  showToast(currentLang === 'th' ? "คัดลอกลงคลิปบอร์ดแล้ว!" : "Copied to Clipboard!");
+}
+
+function downloadJSON() {
+  // Overridden in Block 2 setup
+}
+
+function importJSONFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      applyImportedState(data);
+      persistState();
+      refreshDevice();
+      renderSummary();
+      renderEditor();
+      showToast(currentLang === 'th' ? "นำเข้าโครงสร้างสำเร็จ!" : "JSON Profiles Imported!");
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function applyImportedState(data) {
+  // Overridden dynamically in Block 2 setup
+}
+
+function resetAllData() {
+  // Overridden in Block 2 setup
+}
+
+function showInLog(code) {
+  const pills = document.getElementById('log-pills');
+  const pill = document.createElement('span');
+  pill.className = 'key-pill';
+  pill.textContent = code;
+  while (pills.children.length >= 5) pills.removeChild(pills.firstChild);
+  const noMsg = pills.querySelector('.no-input-msg');
+  if (noMsg) noMsg.remove();
+  pills.appendChild(pill);
+  setTimeout(() => { if (pill.parentNode) pill.style.opacity = '0.4'; }, 2500);
+}
+
+function flashPadKey(kid) {
+  const el = kid.startsWith('knob-click') ? document.getElementById('cap-knob-click')
+           : kid.startsWith('knob-')       ? document.getElementById('cap-' + kid)
+           : document.getElementById('cap-' + kid);
+  if (!el) return;
+  el.classList.add('pressed');
+  setTimeout(() => el.classList.remove('pressed'), 180);
+}
+
+function updateDetectedCodeTable(kid, code) {
+  // Overridden in Block 2 setup
+}
+
+// ── AHK HELPER SCRIPT EXPORTER ──
+const AHK_KEYNAME = {
+  'Return':'Enter','Enter':'Enter','Escape':'Escape','Backspace':'Backspace',
+  'Tab':'Tab','Space':'Space','CapsLock':'CapsLock','PrtSc':'PrintScreen',
+  'Insert':'Insert','Delete':'Delete','Home':'Home','End':'End',
+  'Page Up':'PgUp','Page Down':'PgDn',
+  'Left':'Left','Right':'Right','Up':'Up','Down':'Down',
+  'Num0':'Numpad0','Num1':'Numpad1','Num2':'Numpad2','Num3':'Numpad3',
+  'Num4':'Numpad4','Num5':'Numpad5','Num6':'Numpad6','Num7':'Numpad7',
+  'Num8':'Numpad8','Num9':'Numpad9',
+};
+
+function ahkKeyName(jsKey) {
+  if (!jsKey) return '';
+  if (AHK_KEYNAME[jsKey]) return AHK_KEYNAME[jsKey];
+  if (/^[A-Z]$/.test(jsKey)) return jsKey.toLowerCase();
+  if (/^F([1-9]|1[0-9]|2[0-4])$/.test(jsKey)) return jsKey;
+  return jsKey;
+}
+
+const AHK_MOD_PREFIX = { 'Ctrl':'^', 'Shift':'+', 'Alt':'!', 'Win':'#' };
+
+function ahkSendForCombo(mods, key) {
+  if (!key) return '';
+  const prefix = (mods||[]).map(m => AHK_MOD_PREFIX[m] || '').join('');
+  const name = ahkKeyName(key);
+  const wrap = (name.length === 1 && /[a-z0-9]/i.test(name)) ? name : `{${name}}`;
+  return `Send "${prefix}${wrap}"`;
+}
+
+function ahkEscapeText(s) {
+  return String(s == null ? '' : s)
+    .replace(/`/g, '``')
+    .replace(/"/g, '`"')
+    .replace(/\r?\n/g, '`n')
+    .replace(/\t/g, '`t');
+}
+
+function ahkClickFor(s) {
+  const useC = s.useCoords && (s.x || s.y || s.x === 0 || s.y === 0);
+  const x = parseInt(s.x,10)||0, y = parseInt(s.y,10)||0;
+  switch (s.button) {
+    case 'right':      return useC ? `Click "${x} ${y} Right"`  : `Click "Right"`;
+    case 'middle':     return useC ? `Click "${x} ${y} Middle"` : `Click "Middle"`;
+    case 'doubleLeft': return useC ? `Click "${x} ${y} Left 2"` : `Click "Left 2"`;
+    case 'left':
+    default:           return useC ? `Click "${x} ${y} Left"`   : `Click "Left"`;
+  }
+}
+
+function ahkWheelFor(s) {
+  if (s.dir === 'click') return `Click "Middle"`;
+  const ticks = Math.max(1, parseInt(s.ticks,10)||1);
+  if (s.dir === 'up')   return `Click "WheelUp ${ticks}"`;
+  if (s.dir === 'down') return `Click "WheelDown ${ticks}"`;
+  return '; (unknown wheel dir)';
+}
+
+function ahkLineForStep(s) {
+  switch (s.type) {
+    case 'text':  return `SendText "${ahkEscapeText(s.text||'')}"`;
+    case 'combo': return ahkSendForCombo(s.mods||[], s.key||'');
+    case 'click': return ahkClickFor(s);
+    case 'wheel': return ahkWheelFor(s);
+    case 'wait':  return `Sleep ${Math.max(0, parseInt(s.ms,10)||0)}`;
+  }
+  return '; (unknown step)';
+}
+
+function getMacroSlotsForAHK() {
+  const out = [];
+  const lc = config[currentLayer] || {};
+  ALL_IDS.forEach(kid => {
+    const d = lc[kid];
+    if (!d || d.type !== 'macro') return;
+    const steps = Array.isArray(d.steps)
+      ? d.steps
+      : (typeof d.macro === 'string' && d.macro ? [{type:'text',text:d.macro}] : []);
+    if (!MACRO_TRIGGERS[kid]) return;
+    out.push({ kid, label: d.label || autoLabel(d), steps, delay: d.delay||50 });
+  });
+  return out;
+}
+
+function generateAHKScript() {
+  const slots = getMacroSlotsForAHK();
+  const profileName = (typeof window.currentProfileName === 'string' && window.currentProfileName) ? window.currentProfileName : 'profile';
+  const stamp = new Date().toISOString();
+  const header = `#Requires AutoHotkey v2.0
+#SingleInstance Force
+SendMode "Input"
+SetKeyDelay -1
+CoordMode "Mouse", "Screen"
+
+; ════════════════════════════════════════════════════════════════
+;  Macro Keypad Helper — generated by Macro Keypad Configurator Premium
+;  Profile : ${profileName}
+;  Created : ${stamp}
+;
+;  HOW IT WORKS
+;  The dongle's firmware can only emit standard keyboard keys.
+;  So macro-typed pad keys are programmed to emit trigger combos
+;  (Ctrl+Alt+Shift+F13..F21). AHK intercepts them and replays
+;  the macro steps (text, key combos, mouse clicks, wheel, delays).
+; ════════════════════════════════════════════════════════════════
+
+`;
+  if (!slots.length) {
+    return header + `; (No macro-typed slots in profile "${profileName}".)\n; Add a Macro to a key in the configurator and re-export this script.\n`;
+  }
+  const slotLabel = {'knob-left':'Knob CCW','knob-click':'Knob Press','knob-right':'Knob CW'};
+  const body = slots.map(({kid, label, steps, delay}) => {
+    const trig = MACRO_TRIGGERS[kid];
+    const lines = [];
+    lines.push(`; ── ${slotLabel[kid] || kid} — "${(label||'').replace(/"/g,'\\"')}" ──`);
+    lines.push(`^!+${trig}::Macro_${kid.replace(/-/g,'_')}()`);
+    lines.push(`Macro_${kid.replace(/-/g,'_')}() {`);
+    if (!steps.length) {
+      lines.push(`    ; (no steps defined)`);
+    } else {
+      steps.forEach((s, i) => {
+        lines.push(`    ${ahkLineForStep(s)}`);
+        if (i < steps.length - 1) lines.push(`    Sleep ${delay}`);
+      });
+    }
+    lines.push(`}`);
+    return lines.join('\n');
+  }).join('\n\n');
+  return header + body + '\n';
+}
+
+function downloadAHK() {
+  const script = generateAHKScript();
+  const profileName = (typeof window.currentProfileName === 'string' && window.currentProfileName) ? window.currentProfileName : 'profile';
+  const safe = profileName.replace(/[^a-z0-9_-]+/gi, '_');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([script], {type:'text/plain;charset=utf-8'}));
+  a.download = `keypad-macros-${safe}.ahk`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  showToast(currentLang === 'th' ? "โหลดสคริปต์ AHK สำเร็จ!" : "AHK Script Downloaded!");
+}
+
+function previewAHK() {
+  const script = generateAHKScript();
+  const w = window.open('', '_blank');
+  if (!w) { alert('Pop-up blocked — allow pop-ups to preview, or use Download .ahk instead.'); return; }
+  w.document.write('<!DOCTYPE html><html><head><title>AHK Preview</title>'
+    + '<style>body{font-family:Consolas,monospace;background:#0f0f13;color:#e8e8f0;padding:20px;}pre{white-space:pre-wrap;word-wrap:break-word;line-height:1.45;font-size:13px;}</style>'
+    + '</head><body><pre>' + script.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></body></html>');
+  w.document.close();
+}
+
+function refreshAHKStats() {
+  const el = document.getElementById('ahk-stats');
+  if (!el) return;
+  const slots = getMacroSlotsForAHK();
+  if (!slots.length) {
+    el.textContent = currentLang === 'th' ? 'ไม่มีมาโครติดตั้งในโปรไฟล์' : 'No macro-typed slots in this profile yet.';
+    return;
+  }
+  const totalSteps = slots.reduce((n,s)=>n+s.steps.length, 0);
+  el.textContent = `${slots.length} macro slot${slots.length===1?'':'s'} · ${totalSteps} step${totalSteps===1?'':'s'} total`;
+}
+
+// ── DONGLE HID HARDWARE WRITE LOGIC ──
+const HID_KEYCODES = {
+  'A':0x04,'B':0x05,'C':0x06,'D':0x07,'E':0x08,'F':0x09,'G':0x0A,'H':0x0B,
+  'I':0x0C,'J':0x0D,'K':0x0E,'L':0x0F,'M':0x10,'N':0x11,'O':0x12,'P':0x13,
+  'Q':0x14,'R':0x15,'S':0x16,'T':0x17,'U':0x18,'V':0x19,'W':0x1A,'X':0x1B,
+  'Y':0x1C,'Z':0x1D,
+  '0':0x27,'1':0x1E,'2':0x1F,'3':0x20,'4':0x21,'5':0x22,
+  '6':0x23,'7':0x24,'8':0x25,'9':0x26,
+  'Return':0x28,'Enter':0x28,'Escape':0x29,'Backspace':0x2A,'Tab':0x2B,'Space':0x2C,
+  '-':0x2D,'=':0x2E,'[':0x2F,']':0x30,'\\':0x31,';':0x33,"'":0x34,
+  '`':0x35,',':0x36,'.':0x37,'/':0x38,'CapsLock':0x39,
+  'F1':0x3A,'F2':0x3B,'F3':0x3C,'F4':0x3D,'F5':0x3E,'F6':0x3F,
+  'F7':0x40,'F8':0x41,'F9':0x42,'F10':0x43,'F11':0x44,'F12':0x45,
+  'F13':0x68,'F14':0x69,'F15':0x6A,'F16':0x6B,'F17':0x6C,'F18':0x6D,
+  'F19':0x6E,'F20':0x6F,'F21':0x70,'F22':0x71,'F23':0x72,'F24':0x73,
+  'PrtSc':0x46,'Insert':0x49,'Home':0x4A,'Page Up':0x4B,
+  'Delete':0x4C,'End':0x4D,'Page Down':0x4E,
+  'Right':0x4F,'Left':0x50,'Down':0x51,'Up':0x52,
+  'Num0':0x62,'Num1':0x59,'Num2':0x5A,'Num3':0x5B,'Num4':0x5C,
+  'Num5':0x5D,'Num6':0x5E,'Num7':0x5F,'Num8':0x60,'Num9':0x61,
+};
+
+const MOD_FLAGS = { 'Ctrl':0x01, 'Shift':0x02, 'Alt':0x04, 'Win':0x08 };
+
+const MEDIA_FW = {
+  'vol_down':   0xEA,
+  'vol_up':     0xE9,
+  'mute':       0xE2,
+  'play_pause': 0xCD,
+  'next':       0xB5,
+  'prev':       0xB6,
+  'stop':       0xB7,
+  'bright_up':  0x6F,
+  'bright_down':0x70,
+};
+
+const SLOT_ID_L1 = {
+  'K1':0x01,'K2':0x02,'K3':0x03,'K4':0x04,'K5':0x05,'K6':0x06,
+  'knob-left':0x0D,'knob-click':0x0E,'knob-right':0x0F,
+};
+
+const MACRO_TRIGGERS = {
+  'K1':'F13','K2':'F14','K3':'F15','K4':'F16','K5':'F17','K6':'F18',
+  'knob-left':'F19','knob-click':'F20','knob-right':'F21',
+};
+const MACRO_TRIGGER_MODS = ['Ctrl','Alt','Shift'];
+
+function macroTriggerComboFor(kid) {
+  const key = MACRO_TRIGGERS[kid]; if (!key) return null;
+  return { mods: MACRO_TRIGGER_MODS.slice(), key };
+}
+
+function encodeAssignment(d, kid) {
+  if (!d || !d.type || d.type === 'null') return { type:0x00, mod:0x00, code:0x00 };
+  if (d.type === 'shortcut' || d.type === 'app') {
+    const sc = d.shortcut || {};
+    let mod = 0;
+    (sc.mods || []).forEach(m => { mod |= (MOD_FLAGS[m] || 0); });
+    return { type:0x01, mod, code: HID_KEYCODES[sc.key] || 0x00 };
+  }
+  if (d.type === 'media') return { type:0x02, mod:0x00, code: MEDIA_FW[d.media] || 0x00 };
+  if (d.type === 'macro') {
+    const combo = macroTriggerComboFor(kid);
+    if (!combo) return { type:0x00, mod:0x00, code:0x00 };
+    let mod = 0;
+    combo.mods.forEach(m => { mod |= (MOD_FLAGS[m] || 0); });
+    return { type:0x01, mod, code: HID_KEYCODES[combo.key] || 0x00 };
+  }
+  return { type:0x00, mod:0x00, code:0x00 };
+}
+
+function pad64(prefix) {
+  const buf = new Uint8Array(64);
+  buf.set(prefix.slice(0, 64));
+  return buf;
+}
+
+function buildSlotPackets(kid, d, layer) {
+  const slot = SLOT_ID_L1[kid];
+  if (slot === undefined) throw new Error(`Unknown slot for ${kid}`);
+  const L = layer || 1;
+  const cmdBase = (L & 0x0F) << 4;
+
+  const enc = encodeAssignment(d, kid);
+
+  // Null / clear
+  if (!d || !d.type || d.type === 'null' || (enc.type === 0x00 && enc.mod === 0x00 && enc.code === 0x00)) {
+    return [
+      pad64(Uint8Array.from([0xA1, L, 0x00, 0x00])),
+      pad64(Uint8Array.from([slot, cmdBase | 0x00, 0x00, 0x00])),
+      pad64(Uint8Array.from([0xAA, 0xAA, 0x00, 0x00])),
+    ];
+  }
+
+  // Media
+  if (d.type === 'media') {
+    const consumerCode = MEDIA_FW[d.media] || 0x00;
+    return [
+      pad64(Uint8Array.from([0xA1, L, 0x00, 0x00])),
+      pad64(Uint8Array.from([slot, cmdBase | 0x02, consumerCode, 0x00])),
+      pad64(Uint8Array.from([0xAA, 0xAA, 0x00, 0x00])),
+    ];
+  }
+
+  // Shortcut / app / macro-trigger
+  return [
+    pad64(Uint8Array.from([0xA1, L, 0x00, 0x00])),
+    pad64(Uint8Array.from([slot, cmdBase | 0x01, 0x01, 0x00, 0x00, 0x00, 0x00])),
+    pad64(Uint8Array.from([slot, cmdBase | 0x01, 0x01, enc.type, enc.mod, enc.code, 0x00])),
+    pad64(Uint8Array.from([0xAA, 0xAA, 0x00, 0x00])),
+  ];
+}
+
+function dongleLog(msg, color) {
+  const el = document.getElementById('dongle-log');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.style.cssText = `color:${color||'var(--text-secondary)'};white-space:pre;margin-bottom:1px;`;
+  line.textContent = msg;
+  el.appendChild(line);
+  while (el.children.length > 40) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function hexPrev(buf, n=20) {
+  return [...buf.slice(0, n)].map(b => b.toString(16).padStart(2,'0')).join(' ')
+       + (buf.length > n ? ' …' : '');
+}
+
+function updateDongleStatus() {
+  const dot  = document.getElementById('dongle-dot');
+  const txt  = document.getElementById('dongle-status-txt');
+  const connected = hidDevice && hidDevice.opened;
+  if (dot) dot.classList.toggle('on', !!connected);
+  if (txt) {
+    txt.textContent = connected
+      ? `Connected: ${hidDevice.productName || 'HID device'}`
+      : t('notConnected');
+  }
+}
+
+function scanHIDDevice() {
+  if (!hidDevice || !hidDevice.opened) {
+    dongleLog('⚠ Not connected — scan unavailable.', 'var(--accent-danger)');
+    return;
+  }
+  dongleLog('── HID Descriptor Scan ─────────────────', 'var(--accent-secondary)');
+  dongleLog(`   Product  : ${hidDevice.productName || '(none)'}`);
+  dongleLog(`   VID/PID  : 0x${hidDevice.vendorId.toString(16).padStart(4,'0')} / 0x${hidDevice.productId.toString(16).padStart(4,'0')}`);
+  dongleLog(`   Index    : ${hidDeviceIndex}`);
+  const cols = hidDevice.collections || [];
+  dongleLog(`   Collections: ${cols.length}`);
+  cols.forEach((col, i) => {
+    const up = col.usagePage?.toString(16).padStart(4,'0') ?? '??';
+    const u  = col.usage?.toString(16).padStart(4,'0') ?? '??';
+    dongleLog(`   [${i}] usagePage=0x${up} usage=0x${u} type=${col.type}`);
+  });
+  dongleLog('── End scan ────────────────────────────', 'var(--accent-secondary)');
+}
+
+let _workingRid = 0x03;
+
+async function sendReportFast(buf64, reportId = _workingRid) {
+  await hidDevice.sendReport(reportId, buf64);
+  return reportId;
+}
+
+async function sendSlotPacketsWith(reportId, kid, d, delayMs=60, layer=1) {
+  const packets = buildSlotPackets(kid, d, layer);
+  const enc = encodeAssignment(d, kid);
+  dongleLog(`→ [L${layer}] ${kid} rid=0x${reportId.toString(16).padStart(2,'0')} type=${enc.type.toString(16).padStart(2,'0')} mod=${enc.mod.toString(16).padStart(2,'0')} code=${enc.code.toString(16).padStart(2,'0')} delay=${delayMs}ms`, 'var(--text-secondary)');
+  for (const pkt of packets) {
+    dongleLog(`   ${hexPrev(pkt, 8)}`, 'var(--text-muted)');
+    await sendReportFast(pkt, reportId);
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+}
+
+async function sendLayerToDevice(layer, onProgress) {
+  updateDongleStatus();
+  if (!hidDevice || !hidDevice.opened) {
+    dongleLog('⚠ Not connected. Click Connect WebHID first.', 'var(--accent-danger)');
+    return false;
+  }
+  const lc = config[layer] || {};
+  const assigned = ALL_IDS.filter(k => lc[k] && lc[k].type !== 'null');
+  if (!assigned.length) {
+    dongleLog('ℹ No assignments to send.', 'var(--text-muted)');
+    if (onProgress) onProgress(100);
+    return true;
+  }
+  
+  // Custom Visual LED Backlight writing report
+  if (ledConfig.mode !== 'off') {
+    try {
+      // Custom standard lighting packet template [0xA1, 0x03, modeByte, r, g, b]
+      const hex = ledConfig.color;
+      const r = parseInt(hex.slice(1,3), 16) || 0;
+      const g = parseInt(hex.slice(3,5), 16) || 0;
+      const b = parseInt(hex.slice(5,7), 16) || 0;
+      const modeByte = { static:1, breathe:2, rainbow:3, pulse:4 }[ledConfig.mode] || 1;
+      const ledPkt = pad64(Uint8Array.from([0xA1, 0x03, modeByte, r, g, b, ledConfig.brightness]));
+      await sendReportFast(ledPkt, _workingRid);
+      dongleLog(`→ LED Color Report Hex: [0xA1 03 0${modeByte} ${r.toString(16)} ${g.toString(16)} ${b.toString(16)}]`, 'var(--accent-secondary)');
+    } catch(e) {}
+  }
+
+  dongleLog(`── Sending ${assigned.length} key(s) · reportId 0x${_workingRid.toString(16).padStart(2,'0')} ─────────`, 'var(--accent)');
+  if (onProgress) onProgress(5);
+  try {
+    let sent = 0;
+    for (const kid of ALL_IDS) {
+      if (!(kid in lc)) continue;
+      await sendSlotPacketsWith(_workingRid, kid, lc[kid], 80, layer);
+      sent++;
+      if (onProgress) onProgress(5 + Math.round((sent / assigned.length) * 90));
+    }
+    dongleLog('Config sent.', 'var(--accent-secondary)');
+    if (onProgress) onProgress(100);
+    return true;
+  } catch(err) {
+    dongleLog(`✗ ${err.message}`, 'var(--accent-danger)');
+    return false;
+  }
+}
+</script>
+
+<script>
+// ── ADVANCED PROFILE STORAGE IIFE ──
+(function(){
+  const PROFILE_STORAGE_KEY = 'macro-keypad-profiles-v2';
+  const ACTIVE_PROFILE_KEY  = 'macro-keypad-active-profile-v2';
+  const logLines = [];
+
+  function nullAssignment(){ return {type:'null', label:'NULL'}; }
+  function fullNullConfig(){ const o={}; ALL_IDS.forEach(k=>o[k]=nullAssignment()); return o; }
+  function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+  let userProfiles = {};
+  let currentProfileName = 'Default';
+  let builtInProfiles = {};
+  Object.entries(PRESETS).forEach(([k,v]) => builtInProfiles[k] = clone(v));
+
+  function normalizeCfg(cfg){
+    const out={};
+    ALL_IDS.forEach(k => { if (cfg && cfg[k]) out[k]=cfg[k]; });
+    return out;
+  }
+  
+  function migrateProfile(prof){
+    if (prof && prof.layer1 !== undefined) return prof;
+    return { layer1: normalizeCfg(prof||{}) };
+  }
+  
+  function packProfile(){
+    return { layer1: normalizeCfg(config[1] || {}) };
+  }
+  
+  function unpackProfile(prof){
+    const m = migrateProfile(prof);
+    config[1] = normalizeCfg(m.layer1 || {});
+  }
+  
+  function getCurrentConfig(){ return config[currentLayer] || config[1]; }
+
+  function saveProfiles(){
+    userProfiles[currentProfileName] = packProfile();
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(userProfiles));
+    localStorage.setItem(ACTIVE_PROFILE_KEY, currentProfileName);
+  }
+  
+  function loadProfiles(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || '{}') || {};
+      Object.keys(raw).forEach(k => { raw[k] = migrateProfile(raw[k]); });
+      userProfiles = raw;
+    }catch(_){ userProfiles = {}; }
+    
+    if (!Object.keys(userProfiles).length){
+      userProfiles = { Default: packProfile() };
+    }
+    
+    currentProfileName = localStorage.getItem(ACTIVE_PROFILE_KEY) || Object.keys(userProfiles)[0] || 'Default';
+    if (!userProfiles[currentProfileName]) currentProfileName = Object.keys(userProfiles)[0];
+    unpackProfile(userProfiles[currentProfileName]);
+    currentLayer = 1;
+    
+    const savedPreset = localStorage.getItem('keypad-active-preset');
+    if (savedPreset) applyPresetTheme(savedPreset);
+  }
+
+  function loadProfile(name){
+    saveProfiles();
+    currentProfileName = name;
+    const src = builtInProfiles[name]
+      ? { layer1: normalizeCfg(clone(builtInProfiles[name])) }
+      : (userProfiles[name] || {});
+    unpackProfile(src);
+    if (!builtInProfiles[name]) localStorage.setItem(ACTIVE_PROFILE_KEY, currentProfileName);
+    if (!PRESETS[name]) { applyPresetTheme(null); localStorage.removeItem('keypad-active-preset'); }
+    selectedId = null; captureMode = false;
+    
+    refreshDevice(); 
+    renderSummary(); 
+    renderEditor(); 
+    refreshMapTable(); 
+    refreshProfileUI();
+  }
+  
+  function saveCurrentAsUserProfile(name){
+    userProfiles[name] = packProfile();
+    currentProfileName = name;
+    saveProfiles();
+    refreshProfileUI();
+  }
+  
+  function newProfile(){
+    const name = prompt(currentLang === 'th' ? 'กรุณาใส่ชื่อโปรไฟล์ใหม่ของคุณ:' : 'Enter new profile name:');
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean) return;
+    if (builtInProfiles[clean] || userProfiles[clean]) { alert(currentLang === 'th' ? 'มีโปรไฟล์ชื่อนี้อยู่แล้ว' : 'That profile already exists.'); return; }
+    
+    userProfiles[clean] = { layer1: fullNullConfig() };
+    currentProfileName = clean;
+    unpackProfile(userProfiles[clean]);
+    
+    saveProfiles();
+    refreshDevice(); renderSummary(); renderEditor(); refreshMapTable(); refreshProfileUI();
+    showToast(currentLang === 'th' ? "เพิ่มโปรไฟล์ใหม่แล้ว!" : "New Profile Added!");
+  }
+  
+  function renameProfile(){
+    if (builtInProfiles[currentProfileName]) { alert(currentLang === 'th' ? 'โปรไฟล์สำเร็จรูปไม่สามารถเปลี่ยนชื่อได้' : 'Built-in presets cannot be renamed.'); return; }
+    const name = prompt(currentLang === 'th' ? 'กรุณาใส่ชื่อโปรไฟล์ใหม่:' : 'Rename profile to:', currentProfileName);
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean || clean === currentProfileName) return;
+    if (builtInProfiles[clean] || userProfiles[clean]) { alert(currentLang === 'th' ? 'มีโปรไฟล์ชื่อนี้อยู่แล้ว' : 'That profile already exists.'); return; }
+    
+    userProfiles[clean] = packProfile();
+    delete userProfiles[currentProfileName];
+    currentProfileName = clean;
+    
+    saveProfiles();
+    refreshProfileUI();
+    showToast(currentLang === 'th' ? "เปลี่ยนชื่อสำเร็จ!" : "Profile Renamed!");
+  }
+  
+  function deleteProfile(){
+    if (builtInProfiles[currentProfileName]) { alert(currentLang === 'th' ? 'โปรไฟล์สำเร็จรูปไม่สามารถลบได้' : 'Built-in presets cannot be deleted.'); return; }
+    const names = Object.keys(userProfiles);
+    if (names.length <= 1) { alert(currentLang === 'th' ? 'ต้องเหลือโปรไฟล์ของคุณอย่างน้อย 1 รายการ' : 'Keep at least one user profile.'); return; }
+    if (!confirm(currentLang === 'th' ? `ลบโปรไฟล์ "${currentProfileName}"?` : `Delete profile "${currentProfileName}"?`)) return;
+    
+    delete userProfiles[currentProfileName];
+    currentProfileName = Object.keys(userProfiles)[0];
+    unpackProfile(userProfiles[currentProfileName]);
+    
+    saveProfiles();
+    refreshDevice(); renderSummary(); renderEditor(); refreshMapTable(); refreshProfileUI();
+    showToast(currentLang === 'th' ? "ลบโปรไฟล์สำเร็จ" : "Profile Deleted");
+  }
+  
+  function saveCopyOfCurrent(){
+    const name = prompt(currentLang === 'th' ? 'คัดลอกไฟล์โปรไฟล์เป็นชื่อ:' : 'Save current profile as:', currentProfileName + ' Copy');
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean) return;
+    
+    userProfiles[clean] = packProfile();
+    currentProfileName = clean;
+    
+    saveProfiles();
+    refreshProfileUI();
+    showToast(currentLang === 'th' ? "เซฟคัดลอกสำเร็จ!" : "Profile Copy Saved!");
+  }
+  
+  function refreshProfileUI(){
+    const sel = document.getElementById('profile-select');
+    if (!sel) return;
+    const names = [...Object.keys(userProfiles), ...Object.keys(builtInProfiles).filter(n => !(n in userProfiles))];
+    sel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.value = currentProfileName;
+    const badge = document.getElementById('profile-hint');
+    if (badge) badge.textContent = builtInProfiles[currentProfileName] && !userProfiles[currentProfileName] ? 'Preset' : 'User Config';
+    window.currentProfileName = currentProfileName;
+  }
+
+  const origDongleLog = window.dongleLog;
+  window.dongleLog = function(msg, color){
+    logLines.push(msg);
+    origDongleLog(msg, color);
+  };
+  
+  function downloadFullLog(filename='keypad-diagnostic-log.txt'){
+    const blob = new Blob([logLines.join('\n')], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  }
+  window.downloadFullLog = downloadFullLog;
+
+  // keep UI synced
+  const origRefreshDevice = window.refreshDevice;
+  window.refreshDevice = function(){
+    origRefreshDevice();
+    refreshMapTable();
+    if (typeof refreshAHKStats === 'function') refreshAHKStats();
+  };
+  
+  window.renderSummary = function(){
+    refreshDevice();
+  };
+  
+  const origSaveKey = window.saveKey;
+  window.saveKey = function(){
+    origSaveKey();
+    saveProfiles();
+    refreshMapTable();
+  };
+  
+  window.clearKey = function(){
+    if(!selectedId) return;
+    getCurrentConfig()[selectedId] = nullAssignment();
+    captureMode = false;
+    playSwitchSound();
+    refreshDevice(); renderSummary(); renderEditor(); saveProfiles();
+    showToast(currentLang === 'th' ? "ล้างค่าคีย์สำเร็จ" : "Key cleared");
+  };
+  
+  window.resetAllData = function(){
+    if (!confirm(currentLang === 'th' ? 'ล้างการแมปคีย์ทั้งหมดในโปรไฟล์นี้?' : 'Reset every key in the current profile to NULL?')) return;
+    config[1] = fullNullConfig();
+    selectedId = null;
+    captureMode = false;
+    playSwitchSound();
+    refreshDevice(); renderSummary(); renderEditor(); saveProfiles();
+    dongleLog('ℹ Current profile reset to NULL for all keys.', 'var(--text-secondary)');
+  };
+  
+  window.loadPreset = function(name){
+    const preset = PRESETS[name];
+    if (!preset) return;
+    config[1] = clone(preset);
+    applyPresetTheme(name);
+    localStorage.setItem('keypad-active-preset', name);
+    document.getElementById('overlay').classList.remove('open');
+    selectedId = null; captureMode = false;
+    playSwitchSound();
+    saveProfiles();
+    refreshDevice(); renderSummary(); renderEditor(); refreshProfileUI();
+    showToast(currentLang === 'th' ? `โหลดโปรไฟล์พรีเซ็ต ${name} เรียบร้อย!` : `Loaded ${name} Preset!`);
+  };
+  
+  function setSendProgress(pct) {
+    const fill = document.getElementById('send-progress-fill');
+    if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  }
+  
+  function showSendOverlay() {
+    const ov  = document.getElementById('send-overlay');
+    const txt = document.getElementById('send-overlay-text');
+    const sub = document.getElementById('send-overlay-sub');
+    if (!ov) return;
+    txt.textContent   = currentLang === 'th' ? 'กำลังส่งข้อมูลเข้าเครื่อง...' : 'Uploading...';
+    sub.textContent   = currentLang === 'th' ? 'บอร์ดกำลังเขียนเฟิร์มแวร์ลงหน่วยความจำ' : 'Writing config to keypad memory';
+    setSendProgress(0);
+    ov.classList.add('active');
+  }
+  
+  function updateLastSentBar() {
+    const bar = document.getElementById('last-sent-bar');
+    if (!bar) return;
+    try {
+      const rec = JSON.parse(localStorage.getItem('keypad-last-sent-v1') || 'null');
+      if (rec && rec.ts) {
+        const d = new Date(rec.ts);
+        const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const date = d.toLocaleDateString([], {month:'short', day:'numeric'});
+        bar.textContent = currentLang === 'th' 
+          ? `อัปเดตล่าสุด: "${rec.profile}" — วันที่ ${date} เวลา ${time}`
+          : `Last synced: "${rec.profile}" — ${date} at ${time}`;
+      } else {
+        bar.textContent = currentLang === 'th' ? 'ยังไม่ได้อัปโหลดข้อมูลลงบอร์ดจริง' : 'Not yet synced to hardware';
+      }
+    } catch(_) {}
+  }
+  
+  function hideSendOverlay(success) {
+    const ov  = document.getElementById('send-overlay');
+    const txt = document.getElementById('send-overlay-text');
+    const sub = document.getElementById('send-overlay-sub');
+    if (!ov) return;
+    setSendProgress(100);
+    txt.textContent  = success ? (currentLang === 'th' ? 'อัปโหลดเสร็จสิ้น!' : 'Success!') : 'Done';
+    sub.textContent  = success ? (currentLang === 'th' ? 'ข้อมูลถูกบันทึกสำเร็จ' : 'Keypad firmware updated!') : 'Diagnostic complete';
+    
+    if (success) {
+      try {
+        localStorage.setItem('keypad-last-sent-v1', JSON.stringify({
+          profile: currentProfileName || 'Unknown',
+          ts: Date.now()
+        }));
+      } catch(_) {}
+      updateLastSentBar();
+    }
+    setTimeout(() => ov.classList.remove('active'), 1400);
+  }
+  
+  window.sendCurrentLayer = async function(){
+    showSendOverlay();
+    const ok = await sendLayerToDevice(1, setSendProgress);
+    hideSendOverlay(ok);
+  };
+  
+  window.diagnosticWriteLayer1 = async function(){
+    dongleLog('🧪 Running diagnostic write layers...', 'var(--accent-warn)');
+    const ok = await sendLayerToDevice(1, setSendProgress);
+    downloadFullLog(`keypad-diagnostic-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`);
+    return ok;
+  };
+
+  window.exportStateObject = function(){
+    saveProfiles();
+    return {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      activeProfile: currentProfileName,
+      userProfiles,
+      codeToKeyId
+    };
+  };
+  
+  window.downloadJSON = function(){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(exportStateObject(), null, 2)], {type:'application/json'}));
+    a.download = 'keypad-profiles.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+    showToast(currentLang === 'th' ? "ส่งออกโปรไฟล์สำเร็จ!" : "JSON Profile Exported!");
+  };
+  
+  window.applyImportedState = function(data){
+    if (data.userProfiles) {
+      userProfiles = data.userProfiles;
+    } else {
+      const flat = data.config?.[1] || data.config || data;
+      userProfiles = { Imported: { layer1: normalizeCfg(flat), layer2: {}, layer3: {} } };
+    }
+    currentProfileName = data.activeProfile || Object.keys(userProfiles)[0] || 'Imported';
+    if (!userProfiles[currentProfileName]) currentProfileName = Object.keys(userProfiles)[0];
+    Object.keys(codeToKeyId).forEach(k => delete codeToKeyId[k]);
+    Object.entries(data.codeToKeyId || {}).forEach(([code, slot]) => { codeToKeyId[code] = slot; });
+    unpackProfile(userProfiles[currentProfileName]);
+    saveProfiles();
+    refreshDevice(); renderSummary(); renderEditor(); refreshProfileUI();
+  };
+  
+  window.persistState = function(){ 
+    saveProfiles(); 
+    localStorage.setItem('macro-keypad-mapping-v2', JSON.stringify(codeToKeyId)); 
+  };
+  
+  window.loadPersistedState = function(){
+    loadProfiles();
+    try{
+      const mapping = JSON.parse(localStorage.getItem('macro-keypad-mapping-v2') || '{}') || {};
+      Object.keys(codeToKeyId).forEach(k => delete codeToKeyId[k]);
+      Object.entries(mapping).forEach(([code, slot]) => codeToKeyId[code] = slot);
+    }catch(_){}
+  };
+
+  function assignmentText(kid){
+    const d = getCurrentConfig()[kid];
+    if (!d || d.type === 'null') return '—';
+    return d.label || autoLabel(d);
+  }
+  
+  function fwText(kid){
+    const d = getCurrentConfig()[kid];
+    const enc = encodeAssignment(d, kid);
+    if (!d || d.type === 'null') return '—';
+    if (enc.type === 0) return 'NULL packet';
+    let out = `type=${enc.type.toString(16).padStart(2,'0')} mod=${enc.mod.toString(16).padStart(2,'0')} code=${enc.code.toString(16).padStart(2,'0')}`;
+    if (d.type === 'macro') out += ' (AHK trigger)';
+    return out;
+  }
+  
+  window.refreshMapTable = function(){
+    const tbody = document.getElementById('map-tbody');
+    if (!tbody) return;
+    const labels = {'knob-left':'Knob CCW','knob-right':'Knob CW','knob-click':'Knob Press'};
+    tbody.innerHTML = ALL_IDS.map(kid => {
+      const code = getDetectedCodeForSlot(kid) || '—';
+      const assigned = assignmentText(kid);
+      const status = code !== '—' ? (currentLang === 'th' ? 'แมปแล้ว' : 'Mapped') : (assigned !== '—' ? (currentLang === 'th' ? 'ผูกคำสั่ง' : 'Assigned') : '—');
+      const dot = code !== '—' ? 'dot-detected' : (assigned !== '—' ? 'dot-assigned' : 'dot-empty');
+      return `<tr>
+        <td style="font-weight:700;">${labels[kid] || kid}</td>
+        <td><span class="map-code">${code}</span></td>
+        <td style="color:var(--text); font-weight:700;">${assigned}</td>
+        <td><span class="map-code" style="color:var(--text-secondary);">${fwText(kid)}</span></td>
+        <td><span class="map-status-dot ${dot}"></span>${status}</td>
+      </tr>`;
+    }).join('');
+    ALL_IDS.forEach(kid => {
+      const raw = document.getElementById('raw-' + kid);
+      if (raw) raw.textContent = getDetectedCodeForSlot(kid);
+    });
+  };
+  
+  window.updateDetectedCodeTable = function(kid, code){
+    refreshMapTable();
+  };
+  
+  function rebuildTopBar(){
+    const bar = document.getElementById('profile-bar');
+    if (!bar) return;
+    bar.innerHTML = `
+      <div class="profile-select-container">
+        <label style="font-size:11.5px;color:var(--text-secondary);font-weight:800;white-space:nowrap;" id="t-active-profile">โปรไฟล์คีย์:</label>
+        <select id="profile-select" class="form-select" style="max-width:180px;padding:6px 10px;" onchange="loadProfile(this.value)"></select>
+        <span class="layer-hint" id="profile-hint" style="font-size:10px; font-weight:800; color:var(--accent); background:var(--accent-glow); padding:2px 8px; border-radius:5px; border:1px solid var(--border);"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px; flex-wrap:wrap;">
+        <button class="preset-btn primary" onclick="newProfile()">${t('newProfile')}</button>
+        <button class="preset-btn" onclick="saveCopyOfCurrent()">${t('saveCopy')}</button>
+        <button class="preset-btn" onclick="renameProfile()">${t('rename')}</button>
+        <button class="preset-btn" style="border-color:var(--accent-danger); color:var(--accent-danger);" onclick="deleteProfile()">${t('delete')}</button>
+        <button class="preset-btn" style="border-color:var(--accent); color:var(--accent); font-weight:800;" onclick="document.getElementById('overlay').classList.add('open')">${t('presets')}</button>
+      </div>
+    `;
+  }
+  
+  window.newProfile = newProfile;
+  window.renameProfile = renameProfile;
+  window.deleteProfile = deleteProfile;
+  window.saveCopyOfCurrent = saveCopyOfCurrent;
+  window.loadProfile = loadProfile;
+
+  // rebootstrap from profile storage, then rebuild UI
+  loadPersistedState();
+  loadLEDSettings();
+  rebuildTopBar();
+  refreshProfileUI();
+  refreshDevice();
+  renderEditor();
+  refreshMapTable();
+  refreshLEDVisuals();
+  updateLanguageUI();
+})();
+</script>
+
+</body>
+</html>
